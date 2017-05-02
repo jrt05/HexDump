@@ -18,8 +18,10 @@ public:
 //namespace Graphics {
 class GFXs {
 public:
-    const unsigned int SCREEN_WIDTH = 1024;
-    const unsigned int SCREEN_HEIGHT = 768;
+    enum {
+        SMALLFONT,
+        MEDIUMFONT
+    };
     const Uint32 BACKGROUND = 0xFF000063;
     GFXs();
     ~GFXs();
@@ -33,13 +35,20 @@ public:
     void commit();
 
     bool initialized() { return success; }
-    void buildString(std::string, BMP &b);
+    void buildString(std::string s, BMP &b, int fontsize);
     SDL_Texture *getTextureFromBMP(char *);
     SDL_Texture *getTexture(int w, int h);
     //SDL_Window *getWindow() { return window; }
     HMENU *getMenu() { return &mMenu; }
 
+    int getWidth() { return drawableWidth; }
+    int getHeight() { return drawableHeight; }
+
 private:
+    int drawableWidth;
+    int drawableHeight;
+    const unsigned int SCREEN_WIDTH = 1024;
+    const unsigned int SCREEN_HEIGHT = 768;
     int currentGraphicsMode;
     void readBMP(const char *, BMP &b);
     void destroy();
@@ -56,6 +65,7 @@ private:
     HWND mHandle;
     HMENU mMenu;
 
-    BMP font;
+    BMP smallfont;
+    BMP mediumfont;
 };
 

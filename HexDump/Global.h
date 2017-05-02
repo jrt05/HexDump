@@ -1,3 +1,3 @@
 #pragma once
 
-#define HEXDUMPVERSION "v0.00.01"
+#define HEXDUMPVERSION "v0.02"

@@ -6,6 +6,7 @@
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <SDL_events.h>
+#include <SDL_mouse.h>
 #include <SDL_syswm.h>
 
 InputHandler::InputHandler() {
@@ -13,6 +14,7 @@ InputHandler::InputHandler() {
     close_requested = false;
     load = false;
     menu = false;
+    mouseY = 0;
 }
 
 InputHandler::~InputHandler() {
@@ -38,6 +40,11 @@ bool InputHandler::load_pressed() {
     load = false;
     return ret;
 }
+int InputHandler::mouse_scrolled() {
+    int ret = mouseY;
+    mouseY = 0;
+    return ret;
+}
 
 void InputHandler::keydown(SDL_Event &event) {
     keys[event.key.keysym.sym] = true;
@@ -45,11 +52,17 @@ void InputHandler::keydown(SDL_Event &event) {
 void InputHandler::keyup(SDL_Event &event) {
     keys[event.key.keysym.sym] = false;
 }
+void InputHandler::mouseWheel() {
+    mouseY = windowEvent.wheel.y;
+}
 void InputHandler::update() {
     prevkeys = keys;
 
     while (SDL_PollEvent(&windowEvent) != 0) {
         switch (windowEvent.type) {
+        
+        //case SDL_BUTTON_WHEELUP:
+
         case SDL_SYSWMEVENT:
             switch (windowEvent.syswm.msg->msg.win.msg) {
             case WM_COMMAND:
@@ -78,6 +91,10 @@ void InputHandler::update() {
             // Check if we want to quit
         case SDL_QUIT:
             close_requested = true;
+            break;
+        case SDL_MOUSEWHEEL:
+            mouseWheel();
+            //SDL_MouseWheelDirection();
             break;
         case SDL_KEYDOWN:
             keydown(windowEvent);

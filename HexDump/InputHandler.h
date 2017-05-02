@@ -14,6 +14,9 @@ private:
     bool load;
     bool menu;
 
+    void mouseWheel();
+    int mouseY;
+
     std::map<int, bool> keys;
     std::map<int, bool> prevkeys;
     std::map<int, bool> winEvents;
@@ -31,4 +34,5 @@ public:
     bool is_pressed(int key);
     bool load_pressed();
     bool menu_selected();
+    int mouse_scrolled();
 };

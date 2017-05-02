@@ -76,10 +76,14 @@ void GFXs::create() {
     mMenu = LoadMenu(GetModuleHandle(0), MAKEINTRESOURCE(IDR_MENU1));
     SetMenu(mHandle, mMenu);
 
+    // Set drawable width and height
+    SDL_GL_GetDrawableSize(window, &drawableWidth, &drawableHeight);
+
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");        // turn on nearest pixel sampling
 
     // Load BMPs
-    readBMP("./SmallFont.bmp", font);
+    readBMP("./SmallFont.bmp", smallfont);
+    readBMP("./MediumFont.bmp", mediumfont);
 
     context = SDL_GL_CreateContext(window);
 }
@@ -131,9 +135,20 @@ void GFXs::draw() {
     return;
 }
 
-void GFXs::buildString(std::string str, BMP &bmp) {
-    int charwidth = font.width / 16;
-    int charheight = font.height / 16;
+void GFXs::buildString(std::string str, BMP &bmp, int fontsize) {
+    BMP *font;
+    if (fontsize == SMALLFONT) {
+        font = &smallfont;
+    }
+    else if (fontsize == MEDIUMFONT) {
+        font = &mediumfont;
+    }
+    else {
+        return;
+    }
+
+    int charwidth = font->width / 16;
+    int charheight = font->height / 16;
 
     int stringsize = (int)str.size();
 
@@ -148,12 +163,12 @@ void GFXs::buildString(std::string str, BMP &bmp) {
     //memset(bmp.pixels, 255, bmp.width * bmp.height * sizeof(Uint32));
     // Move each character in the string
     for (size_t x = 0; x != stringsize; ++x) {
-        int charint = str[x];
+        int charint = (unsigned char)str[x];
         // Find first byte of the character we need
-        int charloc = (charwidth * (charint % 16)) + (font.width * (charint / 16) * charheight);
+        int charloc = (charwidth * (charint % 16)) + (font->width * (charint / 16) * charheight);
         // move each row of a character
         for (int y = 0; y != charheight; ++y) {
-            memcpy(bmp.pixels + x * (charwidth + 1) + y * bmp.width, font.pixels + charloc + y * font.width, charwidth * sizeof(Uint32));
+            memcpy(bmp.pixels + x * (charwidth + 1) + y * bmp.width, font->pixels + charloc + y * font->width, charwidth * sizeof(Uint32));
             //bmp.pixels[x * (charwidth)]
         }
     }
