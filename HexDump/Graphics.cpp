@@ -83,9 +83,21 @@ void GFXs::create() {
 
     // Load BMPs
     readBMP("./SmallFont.bmp", smallfont);
-    readBMP("./MediumFont.bmp", mediumfont);
+    readBMP("./Bit Font.bmp", mediumfont);
+    //readBMP("./Natural Font.bmp", mediumfont);
+    //readBMP("./MediumThin.bmp", mediumfont);
 
     context = SDL_GL_CreateContext(window);
+}
+
+void GFXs::setFont(int font) {
+    if (font == BITFONT) {
+        readBMP("./Bit Font.bmp", mediumfont);
+    }
+    else if (font == NATURALFONT) {
+        readBMP("./Natural Font.bmp", mediumfont);
+    }
+
 }
 
 SDL_Texture *GFXs::getTexture(int w, int h) {
@@ -152,8 +164,8 @@ void GFXs::buildString(std::string str, BMP &bmp, int fontsize) {
 
     int stringsize = (int)str.size();
 
-    bmp.width = charwidth * stringsize + stringsize;
-    bmp.height = charheight + 1;
+    bmp.width = charwidth * stringsize + stringsize + stringsize;
+    bmp.height = charheight;
 
     bmp.pixels = new Uint32[bmp.width * bmp.height * sizeof(Uint32)];
     for (size_t x = 0; x != bmp.width * bmp.height; ++x) {
@@ -168,8 +180,17 @@ void GFXs::buildString(std::string str, BMP &bmp, int fontsize) {
         int charloc = (charwidth * (charint % 16)) + (font->width * (charint / 16) * charheight);
         // move each row of a character
         for (int y = 0; y != charheight; ++y) {
-            memcpy(bmp.pixels + x * (charwidth + 1) + y * bmp.width, font->pixels + charloc + y * font->width, charwidth * sizeof(Uint32));
+            memcpy(bmp.pixels + x * charwidth + y * bmp.width, font->pixels + charloc + y * font->width, charwidth * sizeof(Uint32));
             //bmp.pixels[x * (charwidth)]
+        }
+    }
+
+    for (size_t x = 0; x != bmp.width * bmp.height; ++x) {
+        if (bmp.pixels[x] == BACKGROUND) {
+            bmp.pixels[x] = 0xff000000;
+        }
+        else {
+            bmp.pixels[x] = 0xffbfbfbf;
         }
     }
 }

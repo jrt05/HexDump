@@ -13,6 +13,8 @@ private:
     bool close_requested;
     bool load;
     bool menu;
+    bool bitfont;
+    bool naturalfont;
 
     void mouseWheel();
     int mouseY;
@@ -34,5 +36,7 @@ public:
     bool is_pressed(int key);
     bool load_pressed();
     bool menu_selected();
+    bool bit_selected();
+    bool natural_selected();
     int mouse_scrolled();
 };

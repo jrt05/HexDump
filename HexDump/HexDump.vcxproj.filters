@@ -68,4 +68,12 @@
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="Bit Font.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Natural Font.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
 </Project>

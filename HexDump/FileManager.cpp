@@ -33,7 +33,7 @@ FileManager::~FileManager() {
 std::vector<char> FileManager::getChunk(std::streampos pos) {
     std::vector<char> v;
     if (file && pos <= filesize) {
-        unsigned long long size = (CHUNKSIZE > (filesize - pos)) ? (filesize - pos) : CHUNKSIZE;
+        unsigned long long size = (CHUNKSIZE > (unsigned long long)(filesize - pos)) ? (filesize - pos) : CHUNKSIZE;
         v.resize(size);            // Hold max size
         file.seekg(pos);                // reposition file to correct location
         file.read(&v[0], size);    // read in chunk

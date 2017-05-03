@@ -20,13 +20,18 @@ class GFXs {
 public:
     enum {
         SMALLFONT,
-        MEDIUMFONT
+        MEDIUMFONT,
+        BITFONT,
+        NATURALFONT
     };
-    const Uint32 BACKGROUND = 0xFF000063;
+    //const Uint32 BACKGROUND = 0xFF000063;
+    const Uint32 BACKGROUND = 0xFF000000;
     GFXs();
     ~GFXs();
 
     void changeWindowSize();
+
+    void setFont(int font);
 
     void draw();
     void draw(SDL_Texture *t, int x, int y, int w, int h);

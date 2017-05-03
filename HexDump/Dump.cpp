@@ -8,6 +8,7 @@
 #include "FileManager.h"
 #include "Time.h"
 #include "Logger.h"
+#include "resource.h"
 
 Dump::Dump(GFXs *g, InputHandler *h) {
     graphics = g;
@@ -26,9 +27,13 @@ Dump::Dump(GFXs *g, InputHandler *h) {
 
     for (size_t x = 0; x != background->width * background->height; ++x) {
         background->pixels[x] = graphics->BACKGROUND;
+        background->pixels[x] = 0xff000000;
     }
 
     clearScreen();
+
+    graphics->setFont(graphics->BITFONT);
+    CheckMenuItem(*graphics->getMenu(), ID_FONT_BITFONT, MF_CHECKED);
 
     SDL_UpdateTexture(texture, NULL, screen->pixels, screen->width * sizeof(Uint32));  // Copy pixels on to window
 }
@@ -84,7 +89,7 @@ void Dump::fillRows() {
     }
 
     std::streampos temppos = displaypos;
-    for (int x = 0; x != 35 && temppos < filesize; ++x) {
+    for (int x = 0; x != 37 && temppos < filesize; ++x) {
         std::stringstream stream;
         std::string temp;
         stream << std::setfill('0') << std::setw(10) << std::hex << temppos;
@@ -123,7 +128,8 @@ std::string Dump::subvec(const std::vector<char> *buf, size_t pos) {
 
 std::string Dump::char2hex(const std::vector<char> *buf, size_t pos) {
     std::string ret;
-    char b[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+    //char b[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+    char b[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
     for (size_t x = 0; x != 0x10; ++x, ++pos) {
         if (x % 4 == 0) {
             ret.push_back(' ');
@@ -163,16 +169,23 @@ void Dump::update() {
             clearScreen();
             std::string h("File: ");
             h.append(fm->getfilename());
-            h.append("    Size: ");
+            h.append("    Size - Dec: ");
             h.append(std::to_string(fm->getFilesize()));
+            h.append("  Hex: ");
+
+            std::stringstream stream;
+            std::string temp;
+            stream << std::uppercase << std::hex << fm->getFilesize();
+            h.append(stream.str());
+
             h.append(std::string(100, ' '));
 
-            graphics->buildString(h, header, graphics->SMALLFONT);
+            graphics->buildString(h, header, graphics->MEDIUMFONT);
             copy(screen, &header, 10, 5);
             SDL_UpdateTexture(texture, NULL, screen->pixels, screen->width * sizeof(Uint32));  // Copy pixels on to window
 
             getBuffer(0);
-            displaypos = 0; //1024 * 1024 * 2 - 0x400;
+            displaypos = 0;
             fillRows();
         }
     }
@@ -194,6 +207,19 @@ void Dump::update() {
         }
         clearScreen();
         copy(screen, &header, 10, 5);
+        fillRows();
+    }
+    // A font is chosen
+    if (input->bit_selected()) {
+        graphics->setFont(graphics->BITFONT);
+        CheckMenuItem(*graphics->getMenu(), ID_FONT_BITFONT, MF_CHECKED);
+        CheckMenuItem(*graphics->getMenu(), ID_FONT_NATURALFONT, MF_UNCHECKED);
+        fillRows();
+    }
+    if (input->natural_selected()) {
+        graphics->setFont(graphics->NATURALFONT);
+        CheckMenuItem(*graphics->getMenu(), ID_FONT_BITFONT, MF_UNCHECKED);
+        CheckMenuItem(*graphics->getMenu(), ID_FONT_NATURALFONT, MF_CHECKED);
         fillRows();
     }
     graphics->draw(texture);

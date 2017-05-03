@@ -122,6 +122,8 @@
       <AdditionalLibraryDirectories>C:\Users\Jason\programming\libs\SDL2-devel-2.0.4-VC\SDL2-2.0.4\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>SDL2.lib;SDL2main.lib;Winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
+      <StripPrivateSymbols>/PDBSTRIPPED</StripPrivateSymbols>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -145,6 +147,10 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="HexDump.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Bit Font.bmp" />
+    <Image Include="Natural Font.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

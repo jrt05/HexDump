@@ -15,6 +15,7 @@ InputHandler::InputHandler() {
     load = false;
     menu = false;
     mouseY = 0;
+    bitfont = naturalfont = false;
 }
 
 InputHandler::~InputHandler() {
@@ -34,7 +35,16 @@ bool InputHandler::menu_selected() {
     menu = false;
     return ret;
 }
-
+bool InputHandler::bit_selected() {
+    bool ret = bitfont;
+    bitfont = false;
+    return ret;
+}
+bool InputHandler::natural_selected() {
+    bool ret = naturalfont;
+    naturalfont = false;
+    return ret;
+}
 bool InputHandler::load_pressed() {
     bool ret = load;
     load = false;
@@ -79,6 +89,12 @@ void InputHandler::update() {
                     break;
                 case ID_FILE_LOAD:
                     load = true;
+                    break;
+                case ID_FONT_BITFONT:
+                    bitfont = true;
+                    break;
+                case ID_FONT_NATURALFONT:
+                    naturalfont = true;
                     break;
                 default:
                     break;
