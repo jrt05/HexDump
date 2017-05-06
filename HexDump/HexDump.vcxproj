@@ -149,8 +149,8 @@
     <ResourceCompile Include="HexDump.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="Bit Font.bmp" />
-    <Image Include="Natural Font.bmp" />
+    <Image Include="res\Bit Font.bmp" />
+    <Image Include="res\Natural Font.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

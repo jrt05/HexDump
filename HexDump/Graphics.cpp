@@ -82,20 +82,17 @@ void GFXs::create() {
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");        // turn on nearest pixel sampling
 
     // Load BMPs
-    readBMP("./SmallFont.bmp", smallfont);
-    readBMP("./Bit Font.bmp", mediumfont);
-    //readBMP("./Natural Font.bmp", mediumfont);
-    //readBMP("./MediumThin.bmp", mediumfont);
+    setFont(BITFONT);
 
     context = SDL_GL_CreateContext(window);
 }
 
 void GFXs::setFont(int font) {
     if (font == BITFONT) {
-        readBMP("./Bit Font.bmp", mediumfont);
+        readBMP("./res/Bit Font.bmp", mediumfont);
     }
     else if (font == NATURALFONT) {
-        readBMP("./Natural Font.bmp", mediumfont);
+        readBMP("./res/Natural Font.bmp", mediumfont);
     }
 }
 

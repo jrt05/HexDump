@@ -69,10 +69,10 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="Bit Font.bmp">
+    <Image Include="res\Bit Font.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="Natural Font.bmp">
+    <Image Include="res\Natural Font.bmp">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
