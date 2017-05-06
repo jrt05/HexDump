@@ -25,6 +25,8 @@ private:
     
     std::streampos filesize;
 
+    bool file_opened;       // True if we opened a file
+
     std::streampos displaypos;
     void fillRows();
 

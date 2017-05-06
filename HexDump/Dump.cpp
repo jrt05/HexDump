@@ -17,6 +17,7 @@ Dump::Dump(GFXs *g, InputHandler *h) {
     bufferpos = 0;
     displaypos = 0;
     filesize = 0;
+    file_opened = false;
 
     texture = graphics->getTexture(graphics->getWidth(), graphics->getHeight());
     //texture = graphics->getTexture(graphics->SCREEN_WIDTH, graphics->SCREEN_HEIGHT);
@@ -57,6 +58,10 @@ void Dump::copy(BMP *dst, BMP *src, int xpos, int ypos) {
 }
 
 void Dump::fillRows() {
+    if (!file_opened) {
+        return;
+    }
+
     // Want to display an address that is out of range
     if (displaypos >= filesize) {
         displaypos = filesize - (filesize % std::streampos(0x10));
@@ -92,7 +97,7 @@ void Dump::fillRows() {
     for (int x = 0; x != 37 && temppos < filesize; ++x) {
         std::stringstream stream;
         std::string temp;
-        stream << std::setfill('0') << std::setw(10) << std::hex << temppos;
+        stream << std::setfill('0') << std::uppercase << std::setw(10) << std::hex << temppos;
         temp = stream.str();
 
         temp.append("    ");
@@ -148,7 +153,7 @@ std::string Dump::char2hex(const std::vector<char> *buf, size_t pos) {
 }
 
 void Dump::getBuffer(std::streampos pos) {
-    Logger::LogOut.logstream << Time::getTimeString << " Recieved new chunk at pos " << pos << std::endl;
+    Logger::LogOut.logstream << Time::getTimeString() << " Recieved new chunk at pos " << pos << std::endl;
     buffer = fm->getChunk(pos);
     bufferpos = pos;
 }
@@ -165,6 +170,7 @@ void Dump::update() {
         }
         fm = new FileManager();
         if (fm->succeeded()) {
+            file_opened = true;
             filesize = fm->getFilesize();
             clearScreen();
             std::string h("File: ");
