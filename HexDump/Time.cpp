@@ -19,9 +19,9 @@ namespace Time {
     }
 
     // Get nanoseconds since start time
-    long long getNanoSeconds() {
+    nanoseconds getNanoSeconds() {
         time_p t_now = Time::now();
-        long long ret = std::chrono::duration_cast<std::chrono::nanoseconds>(t_now - time_start).count();
+        nanoseconds ret = std::chrono::duration_cast<std::chrono::nanoseconds>(t_now - time_start).count();
         return ret;
     }
     // Get delta time since last time

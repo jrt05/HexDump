@@ -1,10 +1,12 @@
 #pragma once
 
 #include <vector>
+#include <map>
 
 #include "Graphics.h"
 #include "InputHandler.h"
 #include "FileManager.h"
+#include "Time.h"
 
 class Dump {
 public:
@@ -25,10 +27,17 @@ private:
     
     std::streampos filesize;
 
+    void moveDisplayPos(int offset);
+
     bool file_opened;       // True if we opened a file
+
+    std::map<long long, Time::nanoseconds> heldtime;
 
     std::streampos displaypos;
     void fillRows();
+    void printRows();
+
+    std::vector<std::string> rows;
 
     BMP font;
     BMP header;

@@ -97,7 +97,6 @@ void GFXs::setFont(int font) {
     else if (font == NATURALFONT) {
         readBMP("./Natural Font.bmp", mediumfont);
     }
-
 }
 
 SDL_Texture *GFXs::getTexture(int w, int h) {

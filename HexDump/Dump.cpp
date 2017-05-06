@@ -19,6 +19,13 @@ Dump::Dump(GFXs *g, InputHandler *h) {
     filesize = 0;
     file_opened = false;
 
+    rows.clear();
+    int r = graphics->getHeight();
+    int f = graphics->getFontHeight() / 16;
+    for (int x = 0; x != r / f; ++x) {
+        rows.push_back(std::string(""));
+    }
+
     texture = graphics->getTexture(graphics->getWidth(), graphics->getHeight());
     //texture = graphics->getTexture(graphics->SCREEN_WIDTH, graphics->SCREEN_HEIGHT);
 
@@ -55,6 +62,16 @@ void Dump::copy(BMP *dst, BMP *src, int xpos, int ypos) {
             dst->pixels[xpos + x + ((ypos + y) * dst->width)] = src->pixels[x + y * src->width];
         }
     }
+}
+
+void Dump::printRows() {
+    clearScreen();
+    for (int x = 0; x != rows.size(); ++x) {
+        BMP line;
+        graphics->buildString(rows[x], line, graphics->MEDIUMFONT);
+        copy(screen, &line, 10, 00 + x * line.height);
+    }
+    SDL_UpdateTexture(texture, NULL, screen->pixels, screen->width * sizeof(Uint32));  // Copy pixels on to window
 }
 
 void Dump::fillRows() {
@@ -94,7 +111,11 @@ void Dump::fillRows() {
     }
 
     std::streampos temppos = displaypos;
-    for (int x = 0; x != 37 && temppos < filesize; ++x) {
+    for (int x = 3; x != rows.size(); ++x, temppos += 0x10) {
+        if (temppos >= filesize) {          // Our position is out of file, so don't print anything
+            rows[x] = "";
+            continue;
+        }
         std::stringstream stream;
         std::string temp;
         stream << std::setfill('0') << std::uppercase << std::setw(10) << std::hex << temppos;
@@ -108,13 +129,10 @@ void Dump::fillRows() {
         temp.append(subvec(&buffer, temppos - bufferpos));
         temp.append("|");
 
-        BMP line;
-        graphics->buildString(temp, line, graphics->MEDIUMFONT);
-        copy(screen, &line, 10, 40 + x * line.height);
-        temppos += 0x10;
+        rows[x] = temp;
     }
 
-    SDL_UpdateTexture(texture, NULL, screen->pixels, screen->width * sizeof(Uint32));  // Copy pixels on to window
+    printRows();
 }
 
 std::string Dump::subvec(const std::vector<char> *buf, size_t pos) {
@@ -162,6 +180,24 @@ void Dump::clearScreen() {
     memcpy(screen->pixels, background->pixels, background->width * background->height * sizeof(Uint32));
 }
 
+void Dump::moveDisplayPos(int offset) {
+    if (fm != NULL && fm->succeeded()) {
+        if (offset < 0) {
+            if (displaypos >= -offset) {
+                displaypos += offset;
+            }
+            else {
+                displaypos = 0;
+            }
+        }
+        else {
+            displaypos += offset;
+            if (displaypos >= fm->getFilesize()) {
+                displaypos = fm->getFilesize();
+            }
+        }
+    }
+}
 void Dump::update() {
     if (input->load_pressed()) {
         if (fm != NULL) {
@@ -169,50 +205,100 @@ void Dump::update() {
             fm = NULL;
         }
         fm = new FileManager();
-        if (fm->succeeded()) {
+        if (fm->succeeded()) {          // File is opened!
             file_opened = true;
             filesize = fm->getFilesize();
             clearScreen();
+
+            // Create header
             std::string h("File: ");
             h.append(fm->getfilename());
-            h.append("    Size - Dec: ");
+            rows[0] = h;
+
+            h = std::string("  Size - Dec: ");
             h.append(std::to_string(fm->getFilesize()));
             h.append("  Hex: ");
 
             std::stringstream stream;
-            std::string temp;
+
             stream << std::uppercase << std::hex << fm->getFilesize();
             h.append(stream.str());
+            rows[1] = h;
 
-            h.append(std::string(100, ' '));
-
-            graphics->buildString(h, header, graphics->MEDIUMFONT);
-            copy(screen, &header, 10, 5);
-            SDL_UpdateTexture(texture, NULL, screen->pixels, screen->width * sizeof(Uint32));  // Copy pixels on to window
-
+            // set parms and print to screen
             getBuffer(0);
             displaypos = 0;
             fillRows();
         }
     }
+
+    // Here we check for key press scrolling
+    if (input->is_pressed(SDLK_UP)) {
+        heldtime[SDLK_UP] = Time::getNanoSeconds();
+        moveDisplayPos(-0x10);
+        fillRows();
+    }
+    else if (input->is_held(SDLK_UP)) {
+        if (Time::getNanoSeconds() - heldtime[SDLK_UP] > Time::SECOND) {
+            moveDisplayPos(-0x10);
+            fillRows();
+        }
+    }
+
+    if (input->is_pressed(SDLK_DOWN)) {
+        heldtime[SDLK_DOWN] = Time::getNanoSeconds();
+        moveDisplayPos(0x10);
+        fillRows();
+    }
+    else if (input->is_held(SDLK_DOWN)) {
+        if (Time::getNanoSeconds() - heldtime[SDLK_DOWN] > Time::SECOND) {
+            moveDisplayPos(0x10);
+            fillRows();
+        }
+    }
+
+    if (input->is_pressed(SDLK_PAGEUP)) {
+        heldtime[SDLK_PAGEUP] = Time::getNanoSeconds();
+        moveDisplayPos(-(int)(0x10 * (rows.size() - 3)));
+        fillRows();
+    }
+    else if (input->is_held(SDLK_PAGEUP)) {
+        if (Time::getNanoSeconds() - heldtime[SDLK_PAGEUP] > Time::SECOND) {
+            moveDisplayPos(-(int)(0x10 * (rows.size() - 3)));
+            fillRows();
+        }
+    }
+
+    if (input->is_pressed(SDLK_PAGEDOWN)) {
+        heldtime[SDLK_PAGEDOWN] = Time::getNanoSeconds();
+        moveDisplayPos((int)(0x10 * (rows.size() - 3)));
+        fillRows();
+    }
+    else if (input->is_held(SDLK_PAGEDOWN)) {
+        if (Time::getNanoSeconds() - heldtime[SDLK_PAGEDOWN] > Time::SECOND) {
+            moveDisplayPos((int)(0x10 * (rows.size() - 3)));
+            fillRows();
+        }
+    }
+
+    if (input->is_pressed(SDLK_HOME)) {
+        displaypos = 0;
+        fillRows();
+    }
+    if (input->is_pressed(SDLK_END)) {
+        if (fm != NULL && fm->succeeded()) {
+            displaypos = fm->getFilesize();
+        }
+        fillRows();
+    }
     int scroll = input->mouse_scrolled();
     if (scroll != 0 && fm != NULL && fm->succeeded()) {
         if (scroll < 0) {       // We scrolled down
-            displaypos += 0x30;
-            if (displaypos >= fm->getFilesize()) {
-                displaypos = fm->getFilesize();
-            }
+            moveDisplayPos(0x30);
         }
         else {                  // We scrolled up
-            if (displaypos >= 0x30) {
-                displaypos -= 0x30;
-            }
-            else {
-                displaypos = 0;
-            }
+            moveDisplayPos(-0x30);
         }
-        clearScreen();
-        copy(screen, &header, 10, 5);
         fillRows();
     }
     // A font is chosen
@@ -222,7 +308,7 @@ void Dump::update() {
         CheckMenuItem(*graphics->getMenu(), ID_FONT_NATURALFONT, MF_UNCHECKED);
         fillRows();
     }
-    if (input->natural_selected()) {
+    else if (input->natural_selected()) {
         graphics->setFont(graphics->NATURALFONT);
         CheckMenuItem(*graphics->getMenu(), ID_FONT_BITFONT, MF_UNCHECKED);
         CheckMenuItem(*graphics->getMenu(), ID_FONT_NATURALFONT, MF_CHECKED);

@@ -70,8 +70,6 @@ void InputHandler::update() {
 
     while (SDL_PollEvent(&windowEvent) != 0) {
         switch (windowEvent.type) {
-        
-        //case SDL_BUTTON_WHEELUP:
 
         case SDL_SYSWMEVENT:
             switch (windowEvent.syswm.msg->msg.win.msg) {
@@ -110,7 +108,6 @@ void InputHandler::update() {
             break;
         case SDL_MOUSEWHEEL:
             mouseWheel();
-            //SDL_MouseWheelDirection();
             break;
         case SDL_KEYDOWN:
             keydown(windowEvent);

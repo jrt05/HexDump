@@ -46,6 +46,7 @@ public:
     //SDL_Window *getWindow() { return window; }
     HMENU *getMenu() { return &mMenu; }
 
+    int getFontHeight() { return mediumfont.height; }
     int getWidth() { return drawableWidth; }
     int getHeight() { return drawableHeight; }
 

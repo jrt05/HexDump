@@ -8,6 +8,7 @@ namespace Time {
     typedef std::chrono::high_resolution_clock::time_point time_p;
     typedef std::chrono::milliseconds ms;
     typedef std::chrono::duration<float> fsec;
+    typedef long long nanoseconds;
 
     const long long SECOND = 1000000000ll;      // One second is a billion nanoseconds
 
