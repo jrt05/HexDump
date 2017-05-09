@@ -19,10 +19,16 @@ Dump::Dump(GFXs *g, InputHandler *h) {
     filesize = 0;
     file_opened = false;
 
+    curser.x = 2;
+    curser.y = 3;
+
     rows.clear();
     int r = graphics->getHeight();
-    int f = graphics->getFontHeight() / 16;
-    for (int x = 0; x != r / f; ++x) {
+    colwidth = graphics->getFontWidth() / 16;
+    rowheight = graphics->getFontHeight() / 16;
+    numcharswidth = (graphics->getWidth() - offset) / colwidth;
+    numcharsheight = graphics->getHeight() / rowheight;
+    for (int x = 0; x != r / rowheight; ++x) {
         rows.push_back(std::string(""));
     }
 
@@ -65,13 +71,33 @@ void Dump::copy(BMP *dst, BMP *src, int xpos, int ypos) {
 }
 
 void Dump::printRows() {
-    clearScreen();
+    SDL_UpdateTexture(texture, NULL, screen->pixels, screen->width * sizeof(Uint32));
     for (int x = 0; x != rows.size(); ++x) {
         BMP line;
         graphics->buildString(rows[x], line, graphics->MEDIUMFONT);
-        copy(screen, &line, 10, 00 + x * line.height);
+        //copy(screen, &line, offset, 00 + x * line.height);
+        SDL_Rect r;
+        r.h = line.height;
+        r.w = line.width;
+        r.x = offset;
+        r.y = x * line.height;
+        SDL_UpdateTexture(texture, &r, line.pixels, line.width * sizeof(Uint32));
+        if (x == curser.y) {
+            BMP us;
+            us.height = 2;
+            us.width = colwidth;
+            us.pixels = new Uint32[colwidth * 2];
+            for (int j = 0; j != colwidth * 2; ++j) {
+                us.pixels[j] = 0xffffffff;
+            }
+            SDL_Rect r;
+            r.h = us.height;
+            r.w = us.width;
+            r.x = offset + colwidth * curser.x;
+            r.y = (x + 1) * rowheight - 2;
+            SDL_UpdateTexture(texture, &r, us.pixels, us.width * sizeof(Uint32));
+        }
     }
-    SDL_UpdateTexture(texture, NULL, screen->pixels, screen->width * sizeof(Uint32));  // Copy pixels on to window
 }
 
 void Dump::fillRows() {
@@ -111,7 +137,7 @@ void Dump::fillRows() {
     }
 
     std::streampos temppos = displaypos;
-    for (int x = 3; x != rows.size(); ++x, temppos += 0x10) {
+    for (int x = startdata; x != rows.size(); ++x, temppos += 0x10) {
         if (temppos >= filesize) {          // Our position is out of file, so don't print anything
             rows[x] = "";
             continue;
@@ -198,6 +224,7 @@ void Dump::moveDisplayPos(int offset) {
         }
     }
 }
+
 void Dump::update() {
     if (input->load_pressed()) {
         if (fm != NULL) {
@@ -234,25 +261,75 @@ void Dump::update() {
 
     // Here we check for key press scrolling
     if (input->is_pressed(SDLK_UP)) {
-        heldtime[SDLK_UP] = Time::getNanoSeconds();
-        moveDisplayPos(-0x10);
+        --curser.y;
+        if (curser.y < startdata) {
+            curser.y = startdata;
+            moveDisplayPos(-0x10);
+        }
         fillRows();
+        heldtime[SDLK_UP] = Time::getNanoSeconds();
     }
     else if (input->is_held(SDLK_UP)) {
-        if (Time::getNanoSeconds() - heldtime[SDLK_UP] > Time::SECOND) {
-            moveDisplayPos(-0x10);
+        if (Time::getNanoSeconds() - heldtime[SDLK_UP] > Time::SECOND / 2) {
+            --curser.y;
+            if (curser.y < startdata) {
+                curser.y = startdata;
+                moveDisplayPos(-0x10);
+            }
             fillRows();
         }
     }
 
-    if (input->is_pressed(SDLK_DOWN)) {
-        heldtime[SDLK_DOWN] = Time::getNanoSeconds();
-        moveDisplayPos(0x10);
+    if (input->is_pressed(SDLK_LEFT)) {
+        --curser.x;
+        if (curser.x < 0) {
+            curser.x = 0;
+        }
         fillRows();
+        heldtime[SDLK_LEFT] = Time::getNanoSeconds();
+    }
+    else if (input->is_held(SDLK_LEFT)) {
+        if (Time::getNanoSeconds() - heldtime[SDLK_LEFT] > Time::SECOND / 2) {
+            --curser.x;
+            if (curser.x < 0) {
+                curser.x = 0;
+            }
+            fillRows();
+        }
+    }
+    if (input->is_pressed(SDLK_RIGHT)) {
+        ++curser.x;
+        if (curser.x >= numcharswidth) {
+            curser.x = numcharswidth - 1;
+        }
+        fillRows();
+        heldtime[SDLK_RIGHT] = Time::getNanoSeconds();
+    }
+    else if (input->is_held(SDLK_RIGHT)) {
+        if (Time::getNanoSeconds() - heldtime[SDLK_RIGHT] > Time::SECOND / 2) {
+            ++curser.x;
+            if (curser.x >= numcharswidth) {
+                curser.x = numcharswidth - 1;
+            }
+            fillRows();
+        }
+    }
+    if (input->is_pressed(SDLK_DOWN)) {
+        ++curser.y;
+        if (curser.y >= numcharsheight) {
+            curser.y = numcharsheight - 1;
+            moveDisplayPos(0x10);
+        }
+        fillRows();
+        heldtime[SDLK_DOWN] = Time::getNanoSeconds();
     }
     else if (input->is_held(SDLK_DOWN)) {
-        if (Time::getNanoSeconds() - heldtime[SDLK_DOWN] > Time::SECOND) {
-            moveDisplayPos(0x10);
+        if (Time::getNanoSeconds() - heldtime[SDLK_DOWN] > Time::SECOND / 2) {
+            ++curser.y;
+            if (curser.y >= numcharsheight) {
+                curser.y = numcharsheight - 1;
+                moveDisplayPos(0x10);
+            }
             fillRows();
         }
     }
@@ -263,7 +340,7 @@ void Dump::update() {
         fillRows();
     }
     else if (input->is_held(SDLK_PAGEUP)) {
-        if (Time::getNanoSeconds() - heldtime[SDLK_PAGEUP] > Time::SECOND) {
+        if (Time::getNanoSeconds() - heldtime[SDLK_PAGEUP] > Time::SECOND / 2) {
             moveDisplayPos(-(int)(0x10 * (rows.size() - 3)));
             fillRows();
         }
@@ -275,7 +352,7 @@ void Dump::update() {
         fillRows();
     }
     else if (input->is_held(SDLK_PAGEDOWN)) {
-        if (Time::getNanoSeconds() - heldtime[SDLK_PAGEDOWN] > Time::SECOND) {
+        if (Time::getNanoSeconds() - heldtime[SDLK_PAGEDOWN] > Time::SECOND / 2) {
             moveDisplayPos((int)(0x10 * (rows.size() - 3)));
             fillRows();
         }
@@ -314,5 +391,6 @@ void Dump::update() {
         CheckMenuItem(*graphics->getMenu(), ID_FONT_NATURALFONT, MF_CHECKED);
         fillRows();
     }
+    //fillRows();
     graphics->draw(texture);
 }

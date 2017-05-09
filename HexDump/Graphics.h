@@ -4,6 +4,7 @@
 #include <SDL_opengl.h>
 #include <SDL_syswm.h>
 #include <string>
+#include <map>
 
 class BMP {
 public:
@@ -47,6 +48,7 @@ public:
     HMENU *getMenu() { return &mMenu; }
 
     int getFontHeight() { return mediumfont.height; }
+    int getFontWidth() { return mediumfont.width; }
     int getWidth() { return drawableWidth; }
     int getHeight() { return drawableHeight; }
 
@@ -62,6 +64,8 @@ private:
     SDL_Window *window;     // Create window
     SDL_Renderer *renderer; // Window renderer
     SDL_GLContext context;
+
+    std::map<std::string, BMP> stringBMP;       // string repository
 
     std::string errorMsg;
     bool success;

@@ -15,6 +15,12 @@ public:
 
     void update();
 private:
+
+    class Pos {
+    public:
+        int x, y;
+    };
+
     void Dump::copy(BMP *dst, BMP *src, int x, int y);
     FileManager *fm;
 
@@ -33,11 +39,20 @@ private:
 
     std::map<long long, Time::nanoseconds> heldtime;
 
+    Time::nanoseconds curserblink;
+
     std::streampos displaypos;
     void fillRows();
     void printRows();
 
     std::vector<std::string> rows;
+    const int startdata = 3;
+    const int offset = 10;          // #pixels to start x position
+    int rowheight;
+    int numcharsheight;
+    int colwidth;
+    int numcharswidth;
+    Pos curser;
 
     BMP font;
     BMP header;

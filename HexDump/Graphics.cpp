@@ -94,6 +94,15 @@ void GFXs::setFont(int font) {
     else if (font == NATURALFONT) {
         readBMP("./res/Natural Font.bmp", mediumfont);
     }
+
+    for (size_t x = 0; x != mediumfont.width * mediumfont.height; ++x) {
+        if (mediumfont.pixels[x] == BACKGROUND) {
+            mediumfont.pixels[x] = 0xff000000;
+        }
+        else {
+            mediumfont.pixels[x] = 0xffbfbfbf;
+        }
+    }
 }
 
 SDL_Texture *GFXs::getTexture(int w, int h) {
@@ -144,16 +153,7 @@ void GFXs::draw() {
 }
 
 void GFXs::buildString(std::string str, BMP &bmp, int fontsize) {
-    BMP *font;
-    if (fontsize == SMALLFONT) {
-        font = &smallfont;
-    }
-    else if (fontsize == MEDIUMFONT) {
-        font = &mediumfont;
-    }
-    else {
-        return;
-    }
+    BMP *font = &mediumfont;
 
     int charwidth = font->width / 16;
     int charheight = font->height / 16;
@@ -181,14 +181,6 @@ void GFXs::buildString(std::string str, BMP &bmp, int fontsize) {
         }
     }
 
-    for (size_t x = 0; x != bmp.width * bmp.height; ++x) {
-        if (bmp.pixels[x] == BACKGROUND) {
-            bmp.pixels[x] = 0xff000000;
-        }
-        else {
-            bmp.pixels[x] = 0xffbfbfbf;
-        }
-    }
 }
 
 void GFXs::readBMP(const char * filename, BMP &bmp) {
