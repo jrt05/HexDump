@@ -226,6 +226,7 @@ void Dump::moveDisplayPos(int offset) {
 }
 
 void Dump::update() {
+    // Load a file
     if (input->load_pressed()) {
         if (fm != NULL) {
             delete fm;
@@ -251,6 +252,9 @@ void Dump::update() {
             stream << std::uppercase << std::hex << fm->getFilesize();
             h.append(stream.str());
             rows[1] = h;
+
+            h = std::string("Cmd:___________________________________________________________________________");
+            rows[2] = h;
 
             // set parms and print to screen
             getBuffer(0);
@@ -391,6 +395,7 @@ void Dump::update() {
         CheckMenuItem(*graphics->getMenu(), ID_FONT_NATURALFONT, MF_CHECKED);
         fillRows();
     }
+
     //fillRows();
     graphics->draw(texture);
 }

@@ -109,6 +109,10 @@ void InputHandler::update() {
         case SDL_MOUSEWHEEL:
             mouseWheel();
             break;
+        case SDL_MOUSEBUTTONDOWN:
+            break;
+        case SDL_MOUSEBUTTONUP:
+            break;
         case SDL_KEYDOWN:
             keydown(windowEvent);
             break;
