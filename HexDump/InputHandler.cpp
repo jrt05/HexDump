@@ -10,6 +10,7 @@
 #include <SDL_syswm.h>
 
 InputHandler::InputHandler() {
+    key_was_pressed = false;
     escape = false;
     close_requested = false;
     load = false;
@@ -67,6 +68,7 @@ void InputHandler::mouseWheel() {
 }
 void InputHandler::update() {
     prevkeys = keys;
+    key_was_pressed = false;
 
     while (SDL_PollEvent(&windowEvent) != 0) {
         switch (windowEvent.type) {
@@ -84,14 +86,18 @@ void InputHandler::update() {
                     // We want to quit
                 case ID_FILE_EXIT:
                     close_requested = true;
+                    key_was_pressed = true;
                     break;
                 case ID_FILE_LOAD:
+                    key_was_pressed = true;
                     load = true;
                     break;
                 case ID_FONT_BITFONT:
+                    key_was_pressed = true;
                     bitfont = true;
                     break;
                 case ID_FONT_NATURALFONT:
+                    key_was_pressed = true;
                     naturalfont = true;
                     break;
                 default:
@@ -104,19 +110,25 @@ void InputHandler::update() {
             break;
             // Check if we want to quit
         case SDL_QUIT:
+            key_was_pressed = true;
             close_requested = true;
             break;
         case SDL_MOUSEWHEEL:
+            key_was_pressed = true;
             mouseWheel();
             break;
         case SDL_MOUSEBUTTONDOWN:
+            key_was_pressed = true;
             break;
         case SDL_MOUSEBUTTONUP:
+            key_was_pressed = true;
             break;
         case SDL_KEYDOWN:
+            key_was_pressed = true;
             keydown(windowEvent);
             break;
         case SDL_KEYUP:
+            key_was_pressed = true;
             keyup(windowEvent);
             break;
         default:

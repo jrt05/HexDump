@@ -45,6 +45,13 @@ private:
     void fillRows();
     void printRows();
 
+    // Command line stuff
+    BMP cmd_line_bmp;
+    SDL_Rect cmd_line_rect;
+    // Curser stuff
+    BMP curser_bmp;
+    SDL_Rect curser_rect;
+
     std::vector<std::string> rows;
     const int startdata = 3;
     const int offset = 10;          // #pixels to start x position

@@ -15,6 +15,7 @@ private:
     bool menu;
     bool bitfont;
     bool naturalfont;
+    bool key_was_pressed;
 
     void mouseWheel();
     int mouseY;
@@ -32,6 +33,7 @@ public:
     ~InputHandler();
     void update();
     bool quit() { return close_requested; }
+    bool key_updated() {return key_was_pressed;}
     bool is_held(int key);
     bool is_pressed(int key);
     bool load_pressed();

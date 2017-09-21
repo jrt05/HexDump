@@ -44,6 +44,30 @@ Dump::Dump(GFXs *g, InputHandler *h) {
         background->pixels[x] = 0xff000000;
     }
 
+    // Create command line stuff
+    cmd_line_bmp.height = 1;
+    cmd_line_bmp.width = colwidth * numcharswidth - 5 * colwidth;
+    cmd_line_bmp.pixels = new Uint32[colwidth * numcharswidth * 1];
+    for (int j = 0; j != colwidth * numcharswidth * 1; ++j) {
+        cmd_line_bmp.pixels[j] = 0xffffffff;
+    }
+    cmd_line_rect.h = cmd_line_bmp.height;
+    cmd_line_rect.w = cmd_line_bmp.width;
+    cmd_line_rect.x = colwidth * 5;
+    cmd_line_rect.y = rowheight * 2 + rowheight - 2;
+
+    // Create curser stuff
+    curser_bmp.height = 2;
+    curser_bmp.width = colwidth;
+    curser_bmp.pixels = new Uint32[colwidth * 2];
+    for (int j = 0; j != colwidth * 2; ++j) {
+        curser_bmp.pixels[j] = 0xffffffff;
+    }
+    curser_rect.h = curser_bmp.height;
+    curser_rect.w = curser_bmp.width;
+    curser_rect.x = colwidth * curser.x;
+    curser_rect.y = (curser.y + 1) * rowheight - 2;
+
     clearScreen();
 
     graphics->setFont(graphics->BITFONT);
@@ -72,6 +96,8 @@ void Dump::copy(BMP *dst, BMP *src, int xpos, int ypos) {
 
 void Dump::printRows() {
     SDL_UpdateTexture(texture, NULL, screen->pixels, screen->width * sizeof(Uint32));
+
+    // Draw each line
     for (int x = 0; x != rows.size(); ++x) {
         BMP line;
         graphics->buildString(rows[x], line, graphics->MEDIUMFONT);
@@ -82,24 +108,19 @@ void Dump::printRows() {
         r.x = offset;
         r.y = x * line.height;
         SDL_UpdateTexture(texture, &r, line.pixels, line.width * sizeof(Uint32));
-        if (x == curser.y) {
-            BMP us;
-            us.height = 2;
-            us.width = colwidth;
-            us.pixels = new Uint32[colwidth * 2];
-            for (int j = 0; j != colwidth * 2; ++j) {
-                us.pixels[j] = 0xffffffff;
-            }
-            SDL_Rect r;
-            r.h = us.height;
-            r.w = us.width;
-            r.x = offset + colwidth * curser.x;
-            r.y = (x + 1) * rowheight - 2;
-            SDL_UpdateTexture(texture, &r, us.pixels, us.width * sizeof(Uint32));
-        }
     }
+
+    // Draw command line
+    SDL_UpdateTexture(texture, &cmd_line_rect, cmd_line_bmp.pixels, cmd_line_bmp.width * sizeof(Uint32));
+
+    // Draw curser
+    curser_rect.x = offset + colwidth * curser.x;
+    curser_rect.y = (curser.y + 1) * rowheight - 2;
+    SDL_UpdateTexture(texture, &curser_rect, curser_bmp.pixels, curser_bmp.width * sizeof(Uint32));
+
 }
 
+// Builds an array with strings of each row
 void Dump::fillRows() {
     if (!file_opened) {
         return;
@@ -225,7 +246,10 @@ void Dump::moveDisplayPos(int offset) {
     }
 }
 
+// Update loop
 void Dump::update() {
+    bool draw_rows = false;
+
     // Load a file
     if (input->load_pressed()) {
         if (fm != NULL) {
@@ -253,16 +277,15 @@ void Dump::update() {
             h.append(stream.str());
             rows[1] = h;
 
-            h = std::string("Cmd:___________________________________________________________________________");
+            h = std::string("Cmd:");//___________________________________________________________________________");
             rows[2] = h;
 
             // set parms and print to screen
             getBuffer(0);
             displaypos = 0;
-            fillRows();
+            draw_rows = true;
         }
     }
-
     // Here we check for key press scrolling
     if (input->is_pressed(SDLK_UP)) {
         --curser.y;
@@ -270,7 +293,7 @@ void Dump::update() {
             curser.y = startdata;
             moveDisplayPos(-0x10);
         }
-        fillRows();
+        draw_rows = true;
         heldtime[SDLK_UP] = Time::getNanoSeconds();
     }
     else if (input->is_held(SDLK_UP)) {
@@ -280,16 +303,17 @@ void Dump::update() {
                 curser.y = startdata;
                 moveDisplayPos(-0x10);
             }
-            fillRows();
+            draw_rows = true;
         }
     }
 
+    // Check if left arrow key is pressed
     if (input->is_pressed(SDLK_LEFT)) {
         --curser.x;
         if (curser.x < 0) {
             curser.x = 0;
         }
-        fillRows();
+        draw_rows = true;
         heldtime[SDLK_LEFT] = Time::getNanoSeconds();
     }
     else if (input->is_held(SDLK_LEFT)) {
@@ -298,15 +322,16 @@ void Dump::update() {
             if (curser.x < 0) {
                 curser.x = 0;
             }
-            fillRows();
+            draw_rows = true;
         }
     }
+    // Check if right arrow key is pressed
     if (input->is_pressed(SDLK_RIGHT)) {
         ++curser.x;
         if (curser.x >= numcharswidth) {
             curser.x = numcharswidth - 1;
         }
-        fillRows();
+        draw_rows = true;
         heldtime[SDLK_RIGHT] = Time::getNanoSeconds();
     }
     else if (input->is_held(SDLK_RIGHT)) {
@@ -315,16 +340,17 @@ void Dump::update() {
             if (curser.x >= numcharswidth) {
                 curser.x = numcharswidth - 1;
             }
-            fillRows();
+            draw_rows = true;
         }
     }
+    // Check if down arrow is pressed
     if (input->is_pressed(SDLK_DOWN)) {
         ++curser.y;
         if (curser.y >= numcharsheight) {
             curser.y = numcharsheight - 1;
             moveDisplayPos(0x10);
         }
-        fillRows();
+        draw_rows = true;
         heldtime[SDLK_DOWN] = Time::getNanoSeconds();
     }
     else if (input->is_held(SDLK_DOWN)) {
@@ -334,43 +360,43 @@ void Dump::update() {
                 curser.y = numcharsheight - 1;
                 moveDisplayPos(0x10);
             }
-            fillRows();
+            draw_rows = true;
         }
     }
-
+    // Check if up arrow is pressed
     if (input->is_pressed(SDLK_PAGEUP)) {
         heldtime[SDLK_PAGEUP] = Time::getNanoSeconds();
         moveDisplayPos(-(int)(0x10 * (rows.size() - 3)));
-        fillRows();
+        draw_rows = true;
     }
     else if (input->is_held(SDLK_PAGEUP)) {
         if (Time::getNanoSeconds() - heldtime[SDLK_PAGEUP] > Time::SECOND / 2) {
             moveDisplayPos(-(int)(0x10 * (rows.size() - 3)));
-            fillRows();
+            draw_rows = true;
         }
     }
 
     if (input->is_pressed(SDLK_PAGEDOWN)) {
         heldtime[SDLK_PAGEDOWN] = Time::getNanoSeconds();
         moveDisplayPos((int)(0x10 * (rows.size() - 3)));
-        fillRows();
+        draw_rows = true;
     }
     else if (input->is_held(SDLK_PAGEDOWN)) {
         if (Time::getNanoSeconds() - heldtime[SDLK_PAGEDOWN] > Time::SECOND / 2) {
             moveDisplayPos((int)(0x10 * (rows.size() - 3)));
-            fillRows();
+            draw_rows = true;
         }
     }
 
     if (input->is_pressed(SDLK_HOME)) {
         displaypos = 0;
-        fillRows();
+        draw_rows = true;
     }
     if (input->is_pressed(SDLK_END)) {
         if (fm != NULL && fm->succeeded()) {
             displaypos = fm->getFilesize();
         }
-        fillRows();
+        draw_rows = true;
     }
     int scroll = input->mouse_scrolled();
     if (scroll != 0 && fm != NULL && fm->succeeded()) {
@@ -380,22 +406,24 @@ void Dump::update() {
         else {                  // We scrolled up
             moveDisplayPos(-0x30);
         }
-        fillRows();
+        draw_rows = true;
     }
     // A font is chosen
     if (input->bit_selected()) {
         graphics->setFont(graphics->BITFONT);
         CheckMenuItem(*graphics->getMenu(), ID_FONT_BITFONT, MF_CHECKED);
         CheckMenuItem(*graphics->getMenu(), ID_FONT_NATURALFONT, MF_UNCHECKED);
-        fillRows();
+        draw_rows = true;
     }
     else if (input->natural_selected()) {
         graphics->setFont(graphics->NATURALFONT);
         CheckMenuItem(*graphics->getMenu(), ID_FONT_BITFONT, MF_UNCHECKED);
         CheckMenuItem(*graphics->getMenu(), ID_FONT_NATURALFONT, MF_CHECKED);
-        fillRows();
+        draw_rows = true;
     }
 
-    //fillRows();
+    if (draw_rows) {
+        fillRows();
+    }
     graphics->draw(texture);
 }
