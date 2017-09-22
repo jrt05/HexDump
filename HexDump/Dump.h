@@ -48,6 +48,7 @@ private:
     // Command line stuff
     BMP cmd_line_bmp;
     SDL_Rect cmd_line_rect;
+    std::string command_string;
     // Curser stuff
     BMP curser_bmp;
     SDL_Rect curser_rect;

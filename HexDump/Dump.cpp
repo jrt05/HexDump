@@ -19,8 +19,10 @@ Dump::Dump(GFXs *g, InputHandler *h) {
     filesize = 0;
     file_opened = false;
 
-    curser.x = 2;
-    curser.y = 3;
+    curser.x = 4;
+    curser.y = 2;
+
+    command_string = "";
 
     rows.clear();
     int r = graphics->getHeight();
@@ -49,7 +51,7 @@ Dump::Dump(GFXs *g, InputHandler *h) {
     cmd_line_bmp.width = colwidth * numcharswidth - 5 * colwidth;
     cmd_line_bmp.pixels = new Uint32[colwidth * numcharswidth * 1];
     for (int j = 0; j != colwidth * numcharswidth * 1; ++j) {
-        cmd_line_bmp.pixels[j] = 0xffffffff;
+        cmd_line_bmp.pixels[j] = 0xffbfbfbf;
     }
     cmd_line_rect.h = cmd_line_bmp.height;
     cmd_line_rect.w = cmd_line_bmp.width;
@@ -66,7 +68,7 @@ Dump::Dump(GFXs *g, InputHandler *h) {
     curser_rect.h = curser_bmp.height;
     curser_rect.w = curser_bmp.width;
     curser_rect.x = colwidth * curser.x;
-    curser_rect.y = (curser.y + 1) * rowheight - 2;
+    curser_rect.y = (curser.y + 1) * rowheight - 3;
 
     clearScreen();
 
@@ -110,14 +112,23 @@ void Dump::printRows() {
         SDL_UpdateTexture(texture, &r, line.pixels, line.width * sizeof(Uint32));
     }
 
+    // Draw any commands
+    BMP line;
+    graphics->buildString(command_string, line, graphics->MEDIUMFONT);
+    SDL_Rect r;
+    r.h = line.height;
+    r.w = line.width;
+    r.x = offset + colwidth * 4;
+    r.y = 2 * line.height;
+    SDL_UpdateTexture(texture, &r, line.pixels, line.width * sizeof(Uint32));
+
     // Draw command line
     SDL_UpdateTexture(texture, &cmd_line_rect, cmd_line_bmp.pixels, cmd_line_bmp.width * sizeof(Uint32));
 
     // Draw curser
     curser_rect.x = offset + colwidth * curser.x;
-    curser_rect.y = (curser.y + 1) * rowheight - 2;
+    curser_rect.y = (curser.y + 1) * rowheight - 3;
     SDL_UpdateTexture(texture, &curser_rect, curser_bmp.pixels, curser_bmp.width * sizeof(Uint32));
-
 }
 
 // Builds an array with strings of each row
@@ -277,7 +288,7 @@ void Dump::update() {
             h.append(stream.str());
             rows[1] = h;
 
-            h = std::string("Cmd:");//___________________________________________________________________________");
+            h = std::string("Cmd:");
             rows[2] = h;
 
             // set parms and print to screen
@@ -289,9 +300,8 @@ void Dump::update() {
     // Here we check for key press scrolling
     if (input->is_pressed(SDLK_UP)) {
         --curser.y;
-        if (curser.y < startdata) {
-            curser.y = startdata;
-            moveDisplayPos(-0x10);
+        if (curser.y < 0) { //startdata) {
+            curser.y = 0; //startdata;
         }
         draw_rows = true;
         heldtime[SDLK_UP] = Time::getNanoSeconds();
@@ -299,9 +309,8 @@ void Dump::update() {
     else if (input->is_held(SDLK_UP)) {
         if (Time::getNanoSeconds() - heldtime[SDLK_UP] > Time::SECOND / 2) {
             --curser.y;
-            if (curser.y < startdata) {
-                curser.y = startdata;
-                moveDisplayPos(-0x10);
+            if (curser.y < 0) { //startdata) {
+                curser.y = 0; //startdata;
             }
             draw_rows = true;
         }
@@ -348,7 +357,6 @@ void Dump::update() {
         ++curser.y;
         if (curser.y >= numcharsheight) {
             curser.y = numcharsheight - 1;
-            moveDisplayPos(0x10);
         }
         draw_rows = true;
         heldtime[SDLK_DOWN] = Time::getNanoSeconds();
@@ -358,7 +366,6 @@ void Dump::update() {
             ++curser.y;
             if (curser.y >= numcharsheight) {
                 curser.y = numcharsheight - 1;
-                moveDisplayPos(0x10);
             }
             draw_rows = true;
         }
@@ -389,7 +396,9 @@ void Dump::update() {
     }
 
     if (input->is_pressed(SDLK_HOME)) {
-        displaypos = 0;
+        //displaypos = 0;
+        curser.x = 4;
+        curser.y = 2;
         draw_rows = true;
     }
     if (input->is_pressed(SDLK_END)) {
@@ -420,6 +429,31 @@ void Dump::update() {
         CheckMenuItem(*graphics->getMenu(), ID_FONT_BITFONT, MF_UNCHECKED);
         CheckMenuItem(*graphics->getMenu(), ID_FONT_NATURALFONT, MF_CHECKED);
         draw_rows = true;
+    }
+
+    // Check if we clicked the mouse
+    int mx, my;
+    if (input->mouse_clicked(&mx, &my)) {
+        // We only want to move the curser if left was clicked
+        // Currently doesn't work...
+        if (input->left_clicked()) {
+            mx = mx - offset;
+            if (mx < 0) mx = 0;
+            mx = mx / colwidth;
+            curser.x = mx;
+
+            my = my / rowheight;
+            curser.y = my;
+
+            // Make sure curser stays in screen
+            if (curser.x >= numcharswidth) {
+                curser.x = numcharswidth - 1;
+            }
+            if (curser.y >= numcharsheight) {
+                curser.y = numcharsheight - 1;
+            }
+            draw_rows = true;
+        }
     }
 
     if (draw_rows) {
