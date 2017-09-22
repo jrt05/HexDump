@@ -18,8 +18,11 @@ private:
     bool bitfont;
     bool naturalfont;
     bool key_was_pressed;
+    bool uppercase;
+    bool case_selected;
     bool mouse_was_clicked;
     bool left_mouse_was_clicked;
+    bool mouse_held;
 
     void mouseWheel();
     int mouseY;
@@ -43,10 +46,13 @@ public:
     bool is_held(int key);
     bool is_pressed(int key);
     bool load_pressed();
+    bool is_case_selected() { return case_selected; }
+    bool is_uppercase() { return uppercase; }
     bool menu_selected();
     bool bit_selected();
     bool natural_selected();
     int mouse_scrolled();
     bool mouse_clicked(int *x, int *y);
     bool left_clicked();
+    bool is_mouse_held(int *x, int *y);
 };

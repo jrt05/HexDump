@@ -19,8 +19,13 @@ Dump::Dump(GFXs *g, InputHandler *h) {
     filesize = 0;
     file_opened = false;
 
+    uppercase = true;
+    CheckMenuItem(*graphics->getMenu(), ID_HEX_UPPERCASE, MF_CHECKED);
+
     curser.x = 4;
     curser.y = 2;
+    cm_pos.x = -1;
+    cm_pos.y = -1;
 
     command_string = "";
 
@@ -97,6 +102,9 @@ void Dump::copy(BMP *dst, BMP *src, int xpos, int ypos) {
 }
 
 void Dump::printRows() {
+    if (!file_opened) {
+        return;
+    }
     SDL_UpdateTexture(texture, NULL, screen->pixels, screen->width * sizeof(Uint32));
 
     // Draw each line
@@ -111,6 +119,7 @@ void Dump::printRows() {
         r.y = x * line.height;
         SDL_UpdateTexture(texture, &r, line.pixels, line.width * sizeof(Uint32));
     }
+    rows_updated = false;
 
     // Draw any commands
     BMP line;
@@ -129,6 +138,11 @@ void Dump::printRows() {
     curser_rect.x = offset + colwidth * curser.x;
     curser_rect.y = (curser.y + 1) * rowheight - 3;
     SDL_UpdateTexture(texture, &curser_rect, curser_bmp.pixels, curser_bmp.width * sizeof(Uint32));
+
+    // Do we want to draw selection field?
+    if (curser_moving) {
+
+    }
 }
 
 // Builds an array with strings of each row
@@ -136,7 +150,7 @@ void Dump::fillRows() {
     if (!file_opened) {
         return;
     }
-
+    rows_updated = true;
     // Want to display an address that is out of range
     if (displaypos >= filesize) {
         displaypos = filesize - (filesize % std::streampos(0x10));
@@ -176,7 +190,12 @@ void Dump::fillRows() {
         }
         std::stringstream stream;
         std::string temp;
-        stream << std::setfill('0') << std::uppercase << std::setw(10) << std::hex << temppos;
+        if (uppercase) {
+            stream << std::setfill('0') << std::uppercase << std::setw(10) << std::hex << temppos;
+        }
+        else {
+            stream << std::setfill('0') << std::nouppercase << std::setw(10) << std::hex << temppos;
+        }
         temp = stream.str();
 
         temp.append("    ");
@@ -209,8 +228,15 @@ std::string Dump::subvec(const std::vector<char> *buf, size_t pos) {
 
 std::string Dump::char2hex(const std::vector<char> *buf, size_t pos) {
     std::string ret;
-    //char b[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
-    char b[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+    char *b;
+    char lower[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+    char upper[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+    if (uppercase) {
+        b = upper;
+    }
+    else {
+        b = lower;
+    }
     for (size_t x = 0; x != 0x10; ++x, ++pos) {
         if (x % 4 == 0) {
             ret.push_back(' ');
@@ -260,6 +286,7 @@ void Dump::moveDisplayPos(int offset) {
 // Update loop
 void Dump::update() {
     bool draw_rows = false;
+    bool fill_rows = false;
 
     // Load a file
     if (input->load_pressed()) {
@@ -294,7 +321,7 @@ void Dump::update() {
             // set parms and print to screen
             getBuffer(0);
             displaypos = 0;
-            draw_rows = true;
+            fill_rows = true;
         }
     }
     // Here we check for key press scrolling
@@ -370,42 +397,43 @@ void Dump::update() {
             draw_rows = true;
         }
     }
-    // Check if up arrow is pressed
+    // Check if pageup is pressed
     if (input->is_pressed(SDLK_PAGEUP)) {
         heldtime[SDLK_PAGEUP] = Time::getNanoSeconds();
         moveDisplayPos(-(int)(0x10 * (rows.size() - 3)));
-        draw_rows = true;
+        fill_rows = true;
     }
     else if (input->is_held(SDLK_PAGEUP)) {
         if (Time::getNanoSeconds() - heldtime[SDLK_PAGEUP] > Time::SECOND / 2) {
             moveDisplayPos(-(int)(0x10 * (rows.size() - 3)));
-            draw_rows = true;
+            fill_rows = true;
         }
     }
-
+    // Check if pagedown is pressed
     if (input->is_pressed(SDLK_PAGEDOWN)) {
         heldtime[SDLK_PAGEDOWN] = Time::getNanoSeconds();
         moveDisplayPos((int)(0x10 * (rows.size() - 3)));
-        draw_rows = true;
+        fill_rows = true;
     }
     else if (input->is_held(SDLK_PAGEDOWN)) {
         if (Time::getNanoSeconds() - heldtime[SDLK_PAGEDOWN] > Time::SECOND / 2) {
             moveDisplayPos((int)(0x10 * (rows.size() - 3)));
-            draw_rows = true;
+            fill_rows = true;
         }
     }
-
+    // Move curser to home place
     if (input->is_pressed(SDLK_HOME)) {
         //displaypos = 0;
         curser.x = 4;
         curser.y = 2;
         draw_rows = true;
     }
+    // Page all the way down
     if (input->is_pressed(SDLK_END)) {
         if (fm != NULL && fm->succeeded()) {
             displaypos = fm->getFilesize();
         }
-        draw_rows = true;
+        fill_rows = true;
     }
     int scroll = input->mouse_scrolled();
     if (scroll != 0 && fm != NULL && fm->succeeded()) {
@@ -415,7 +443,7 @@ void Dump::update() {
         else {                  // We scrolled up
             moveDisplayPos(-0x30);
         }
-        draw_rows = true;
+        fill_rows = true;
     }
     // A font is chosen
     if (input->bit_selected()) {
@@ -430,7 +458,20 @@ void Dump::update() {
         CheckMenuItem(*graphics->getMenu(), ID_FONT_NATURALFONT, MF_CHECKED);
         draw_rows = true;
     }
-
+    // A case is chosen
+    if (input->is_case_selected()) {
+        fill_rows = true;
+        if (input->is_uppercase()) {
+            CheckMenuItem(*graphics->getMenu(), ID_HEX_LOWERCASE, MF_UNCHECKED);
+            CheckMenuItem(*graphics->getMenu(), ID_HEX_UPPERCASE, MF_CHECKED);
+            uppercase = true;
+        }
+        else {
+            CheckMenuItem(*graphics->getMenu(), ID_HEX_LOWERCASE, MF_CHECKED);
+            CheckMenuItem(*graphics->getMenu(), ID_HEX_UPPERCASE, MF_UNCHECKED);
+            uppercase = false;
+        }
+    }
     // Check if we clicked the mouse
     int mx, my;
     if (input->mouse_clicked(&mx, &my)) {
@@ -456,8 +497,30 @@ void Dump::update() {
         }
     }
 
-    if (draw_rows) {
+    if (input->is_mouse_held(&mx, &my)) {
+        mx = mx - offset;
+        if (mx < 0) mx = 0;
+        mx = mx / colwidth;
+        curser.x = mx;
+
+        my = my / rowheight;
+        curser.y = my;
+
+        // Make sure curser stays in screen
+        if (curser.x >= numcharswidth) {
+            curser.x = numcharswidth - 1;
+        }
+        if (curser.y >= numcharsheight) {
+            curser.y = numcharsheight - 1;
+        }
+        draw_rows = true;
+    }
+
+    if (fill_rows) {
         fillRows();
+    }
+    else if (draw_rows) {
+        printRows();
     }
     graphics->draw(texture);
 }

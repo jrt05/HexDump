@@ -16,9 +16,12 @@ InputHandler::InputHandler() {
     load = false;
     menu = false;
     mouseY = 0;
+    uppercase = true;
     bitfont = naturalfont = false;
     mouse_was_clicked = false;
     left_mouse_was_clicked = false;
+    mouse_held = false;
+    case_selected = false;
 }
 
 InputHandler::~InputHandler() {
@@ -33,6 +36,14 @@ bool InputHandler::left_clicked() {
     bool ret = left_mouse_was_clicked;
     left_mouse_was_clicked = false;
     return ret;
+}
+bool InputHandler::is_mouse_held(int *x, int *y) {
+    if (!mouse_held) return false;
+    int ix, iy;
+    SDL_GetMouseState(&ix, &iy);
+    *x = ix;
+    *y = iy;
+    return true;
 }
 
 bool InputHandler::mouse_clicked(int *x, int *y) {
@@ -116,6 +127,16 @@ void InputHandler::update() {
                     key_was_pressed = true;
                     naturalfont = true;
                     break;
+                case ID_HEX_LOWERCASE:
+                    key_was_pressed = true;
+                    case_selected = true;
+                    uppercase = false;
+                    break;
+                case ID_HEX_UPPERCASE:
+                    key_was_pressed = true;
+                    case_selected = true;
+                    uppercase = true;
+                    break;
                 default:
                     break;
                 }
@@ -136,6 +157,7 @@ void InputHandler::update() {
         case SDL_MOUSEBUTTONDOWN:
             SDL_GetMouseState(&mouseclicked.x, &mouseclicked.y);
             mouse_was_clicked = true;
+            mouse_held = true;
             if (SDL_BUTTON(SDL_BUTTON_LEFT)) {
                 left_mouse_was_clicked = true;
             }
@@ -145,6 +167,7 @@ void InputHandler::update() {
             key_was_pressed = true;
             break;
         case SDL_MOUSEBUTTONUP:
+            mouse_held = false;
             key_was_pressed = true;
             break;
         case SDL_KEYDOWN:

@@ -43,7 +43,9 @@ private:
 
     std::streampos displaypos;
     void fillRows();
+    bool rows_updated;
     void printRows();
+    bool uppercase;
 
     // Command line stuff
     BMP cmd_line_bmp;
@@ -61,6 +63,8 @@ private:
     int colwidth;
     int numcharswidth;
     Pos curser;
+    Pos cm_pos;         // curser moving position
+    bool curser_moving;
 
     BMP font;
     BMP header;
