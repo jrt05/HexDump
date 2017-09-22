@@ -159,6 +159,7 @@ void Dump::fillRows() {
         }
     }
 
+
     // We currently don't have the file offset, fetch 1mb before and 1mb after desired location
     if (displaypos < bufferpos) {
         std::streampos newpos;
