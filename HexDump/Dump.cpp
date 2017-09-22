@@ -159,7 +159,6 @@ void Dump::fillRows() {
         }
     }
 
-
     // We currently don't have the file offset, fetch 1mb before and 1mb after desired location
     if (displaypos < bufferpos) {
         std::streampos newpos;
@@ -340,6 +339,9 @@ void Dump::update() {
             fill_rows = true;
         }
     }
+    //
+    //  Check for key presses here
+    //
     // Here we check for key press scrolling
     if (input->is_pressed(SDLK_UP)) {
         --curser.y;
