@@ -199,13 +199,13 @@ void Dump::fillRows() {
         temp = stream.str();
 
         temp.append("    ");
-
-        temp.append(char2hex(&buffer, temppos - bufferpos));
+        std::streampos off = (temppos - bufferpos) % 0x10;      // Round down in hex
+        temp.append(char2hex(&buffer, temppos - bufferpos));    // Convert binary to hex
 
         temp.append("    |");
         temp.append(subvec(&buffer, temppos - bufferpos));
         temp.append("|");
-
+        temppos -= off;
         rows[x] = temp;
     }
 
@@ -214,7 +214,12 @@ void Dump::fillRows() {
 
 std::string Dump::subvec(const std::vector<char> *buf, size_t pos) {
     std::string ret;
-    for (size_t x = 0; x != 0x10; ++x, ++pos) {
+    size_t npos = pos % 0x10;
+    // Pad in front if position isn't multiple of 0x10
+    for (size_t x = 0; x != npos; ++x) {
+        ret.push_back(' ');
+    }
+    for (size_t x = npos; x != 0x10; ++x, ++pos) {
         if (pos >= buf->size()) {
             ret.push_back(' ');
         }
@@ -237,10 +242,20 @@ std::string Dump::char2hex(const std::vector<char> *buf, size_t pos) {
     else {
         b = lower;
     }
-    for (size_t x = 0; x != 0x10; ++x, ++pos) {
+    size_t npos = pos % 0x10;
+    // Pad in front if position isn't multiple of 0x10
+    for (size_t x = 0; x != npos; ++x) {
         if (x % 4 == 0) {
             ret.push_back(' ');
         }
+        ret.push_back(' ');
+        ret.push_back(' ');
+    }
+    for (size_t x = npos; x != 0x10; ++x, ++pos) {
+        if (x % 4 == 0) {
+            ret.push_back(' ');
+        }
+        
         if (pos >= buf->size()) {
             ret.push_back(' ');
             ret.push_back(' ');
@@ -328,6 +343,8 @@ void Dump::update() {
     if (input->is_pressed(SDLK_UP)) {
         --curser.y;
         if (curser.y < 0) { //startdata) {
+            moveDisplayPos(-0x10);
+            fill_rows = true;
             curser.y = 0; //startdata;
         }
         draw_rows = true;
@@ -337,6 +354,8 @@ void Dump::update() {
         if (Time::getNanoSeconds() - heldtime[SDLK_UP] > Time::SECOND / 2) {
             --curser.y;
             if (curser.y < 0) { //startdata) {
+                moveDisplayPos(-0x10);
+                fill_rows = true;
                 curser.y = 0; //startdata;
             }
             draw_rows = true;
@@ -347,6 +366,8 @@ void Dump::update() {
     if (input->is_pressed(SDLK_LEFT)) {
         --curser.x;
         if (curser.x < 0) {
+            moveDisplayPos(-0x1);
+            fill_rows = true;
             curser.x = 0;
         }
         draw_rows = true;
@@ -356,6 +377,8 @@ void Dump::update() {
         if (Time::getNanoSeconds() - heldtime[SDLK_LEFT] > Time::SECOND / 2) {
             --curser.x;
             if (curser.x < 0) {
+                moveDisplayPos(-0x1);
+                fill_rows = true;
                 curser.x = 0;
             }
             draw_rows = true;
@@ -365,6 +388,8 @@ void Dump::update() {
     if (input->is_pressed(SDLK_RIGHT)) {
         ++curser.x;
         if (curser.x >= numcharswidth) {
+            moveDisplayPos(0x1);
+            fill_rows = true;
             curser.x = numcharswidth - 1;
         }
         draw_rows = true;
@@ -374,6 +399,8 @@ void Dump::update() {
         if (Time::getNanoSeconds() - heldtime[SDLK_RIGHT] > Time::SECOND / 2) {
             ++curser.x;
             if (curser.x >= numcharswidth) {
+                moveDisplayPos(0x1);
+                fill_rows = true;
                 curser.x = numcharswidth - 1;
             }
             draw_rows = true;
@@ -383,6 +410,8 @@ void Dump::update() {
     if (input->is_pressed(SDLK_DOWN)) {
         ++curser.y;
         if (curser.y >= numcharsheight) {
+            moveDisplayPos(0x10);
+            fill_rows = true;
             curser.y = numcharsheight - 1;
         }
         draw_rows = true;
@@ -392,6 +421,8 @@ void Dump::update() {
         if (Time::getNanoSeconds() - heldtime[SDLK_DOWN] > Time::SECOND / 2) {
             ++curser.y;
             if (curser.y >= numcharsheight) {
+                moveDisplayPos(0x10);
+                fill_rows = true;
                 curser.y = numcharsheight - 1;
             }
             draw_rows = true;
