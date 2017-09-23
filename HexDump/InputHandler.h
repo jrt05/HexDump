@@ -2,7 +2,7 @@
 
 #include <map>
 #include <vector>
-
+#include <queue>
 #include <SDL_events.h>
 
 struct Point { int x; int y; };
@@ -28,6 +28,10 @@ private:
     int mouseY;
 
     Point mouseclicked;
+
+    std::queue<char> characters;
+    std::vector<bool> displayable;
+    void build_display();
 
     std::map<int, bool> keys;
     std::map<int, bool> prevkeys;
@@ -55,4 +59,6 @@ public:
     bool mouse_clicked(int *x, int *y);
     bool left_clicked();
     bool is_mouse_held(int *x, int *y);
+    bool is_queue_empty() { return characters.empty(); }
+    char get_char();
 };

@@ -22,10 +22,27 @@ InputHandler::InputHandler() {
     left_mouse_was_clicked = false;
     mouse_held = false;
     case_selected = false;
+    displayable.clear();
+    displayable.resize(256, false);
+    build_display();
 }
 
 InputHandler::~InputHandler() {
 
+}
+
+void InputHandler::build_display() {
+    std::string d = "abcdefghijklmnopqrstuvwxyz0123456789`[]\\;',./-=";
+    // Set all displayable characters to true in displayable vector
+    for (size_t x = 0; x != d.size(); ++x) {
+        displayable[d[x]] = true;
+    }
+}
+
+char InputHandler::get_char() {
+    char ret = characters.front();
+    characters.pop();
+    return ret;
 }
 
 bool InputHandler::is_pressed(int key) {
@@ -86,6 +103,18 @@ int InputHandler::mouse_scrolled() {
 
 void InputHandler::keydown(SDL_Event &event) {
     keys[event.key.keysym.sym] = true;
+
+    // Test for capslock
+    //int temp = SDL_GetModState();
+    //temp = temp & KMOD_CAPS;
+    //if (temp == KMOD_CAPS)
+    //    std::cout << "CAP ON";
+
+    if (event.key.keysym.sym < 256) {
+        if (displayable[event.key.keysym.sym]) {
+            characters.push(event.key.keysym.sym);
+        }
+    }
 }
 void InputHandler::keyup(SDL_Event &event) {
     keys[event.key.keysym.sym] = false;

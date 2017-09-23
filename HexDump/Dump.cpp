@@ -107,6 +107,11 @@ void Dump::printRows() {
     }
     SDL_UpdateTexture(texture, NULL, screen->pixels, screen->width * sizeof(Uint32));
 
+    if (cmd.size() != 0) {
+        rows[2] = std::string("Cmd:");
+        rows[2].append(cmd);
+    }
+
     // Draw each line
     for (int x = 0; x != rows.size(); ++x) {
         BMP line;
@@ -339,6 +344,7 @@ void Dump::update() {
             fill_rows = true;
         }
     }
+
     //
     //  Check for key presses here
     //
@@ -548,6 +554,12 @@ void Dump::update() {
             curser.y = numcharsheight - 1;
         }
         draw_rows = true;
+    }
+
+    // Check for command typing
+    if (!input->is_queue_empty()) {
+        cmd += input->get_char();
+        fill_rows = true;
     }
 
     if (fill_rows) {

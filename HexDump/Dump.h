@@ -31,6 +31,8 @@ private:
     std::string char2hex(const std::vector<char> *buf, size_t pos);
     std::string subvec(const std::vector<char> *buf, size_t pos);
     
+    std::string cmd;
+
     std::streampos filesize;
 
     void moveDisplayPos(int offset);
