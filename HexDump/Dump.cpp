@@ -356,6 +356,11 @@ void Dump::update() {
             fill_rows = true;
             curser.y = 0; //startdata;
         }
+		else if (input->is_held(SDLK_LALT) || input->is_held(SDLK_RALT)) {
+			moveDisplayPos(-0x10);
+			fill_rows = true;
+			++curser.y;
+		}
         draw_rows = true;
         heldtime[SDLK_UP] = Time::getNanoSeconds();
     }
@@ -367,6 +372,11 @@ void Dump::update() {
                 fill_rows = true;
                 curser.y = 0; //startdata;
             }
+			else if (input->is_held(SDLK_LALT) || input->is_held(SDLK_RALT)) {
+				moveDisplayPos(-0x10);
+				fill_rows = true;
+				++curser.y;
+			}
             draw_rows = true;
         }
     }
@@ -379,6 +389,11 @@ void Dump::update() {
             fill_rows = true;
             curser.x = 0;
         }
+		else if (input->is_held(SDLK_LALT) || input->is_held(SDLK_RALT)) {
+			moveDisplayPos(-0x1);
+			fill_rows = true;
+			++curser.x;
+		}
         draw_rows = true;
         heldtime[SDLK_LEFT] = Time::getNanoSeconds();
     }
@@ -390,6 +405,11 @@ void Dump::update() {
                 fill_rows = true;
                 curser.x = 0;
             }
+			else if (input->is_held(SDLK_LALT) || input->is_held(SDLK_RALT)) {
+				moveDisplayPos(-0x1);
+				fill_rows = true;
+				++curser.x;
+			}
             draw_rows = true;
         }
     }
@@ -401,6 +421,11 @@ void Dump::update() {
             fill_rows = true;
             curser.x = numcharswidth - 1;
         }
+		else if (input->is_held(SDLK_LALT) || input->is_held(SDLK_RALT)) {
+			moveDisplayPos(0x1);
+			fill_rows = true;
+			--curser.x;
+		}
         draw_rows = true;
         heldtime[SDLK_RIGHT] = Time::getNanoSeconds();
     }
@@ -412,6 +437,11 @@ void Dump::update() {
                 fill_rows = true;
                 curser.x = numcharswidth - 1;
             }
+			else if (input->is_held(SDLK_LALT) || input->is_held(SDLK_RALT)) {
+				moveDisplayPos(0x1);
+				fill_rows = true;
+				--curser.x;
+			}
             draw_rows = true;
         }
     }
@@ -423,6 +453,11 @@ void Dump::update() {
             fill_rows = true;
             curser.y = numcharsheight - 1;
         }
+		else if (input->is_held(SDLK_LALT) || input->is_held(SDLK_RALT)) {
+			moveDisplayPos(0x10);
+			fill_rows = true;
+			--curser.y;
+		}
         draw_rows = true;
         heldtime[SDLK_DOWN] = Time::getNanoSeconds();
     }
@@ -434,6 +469,11 @@ void Dump::update() {
                 fill_rows = true;
                 curser.y = numcharsheight - 1;
             }
+			else if (input->is_held(SDLK_LALT) || input->is_held(SDLK_RALT)) {
+				moveDisplayPos(0x10);
+				fill_rows = true;
+				--curser.y;
+			}
             draw_rows = true;
         }
     }
@@ -463,10 +503,11 @@ void Dump::update() {
     }
     // Move curser to home place
     if (input->is_pressed(SDLK_HOME)) {
-        //displaypos = 0;
-        curser.x = 4;
-        curser.y = 2;
-        draw_rows = true;
+        displaypos = 0;
+        //curser.x = 4;
+        //curser.y = 2;
+        //draw_rows = true;
+		fill_rows = true;
     }
     // Page all the way down
     if (input->is_pressed(SDLK_END)) {

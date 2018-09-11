@@ -3,6 +3,7 @@
 #include "Logger.h"
 #include "resource.h"
 
+#include <map>
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <SDL_events.h>
@@ -32,7 +33,7 @@ InputHandler::~InputHandler() {
 }
 
 void InputHandler::build_display() {
-    std::string d = "abcdefghijklmnopqrstuvwxyz0123456789`[]\\;',./-=";
+    std::string d = "abcdefghijklmnopqrstuvwxyz0123456789`[]\\;',./-= ";
     // Set all displayable characters to true in displayable vector
     for (size_t x = 0; x != d.size(); ++x) {
         displayable[d[x]] = true;
@@ -102,17 +103,38 @@ int InputHandler::mouse_scrolled() {
 }
 
 void InputHandler::keydown(SDL_Event &event) {
-    keys[event.key.keysym.sym] = true;
+    SDL_Keycode kc = event.key.keysym.sym;
+
+    std::map<char, char> pairs = { {'a', 'A'}, {'b', 'B'}, {'c', 'C'} };
+
+    keys[kc] = true;
 
     // Test for capslock
-    //int temp = SDL_GetModState();
-    //temp = temp & KMOD_CAPS;
+    int capstate = SDL_GetModState();
+    bool capsOn = false;
+    capstate = capstate & KMOD_CAPS;
+    capsOn = (capstate == KMOD_CAPS) ? true : false;
     //if (temp == KMOD_CAPS)
     //    std::cout << "CAP ON";
 
-    if (event.key.keysym.sym < 256) {
-        if (displayable[event.key.keysym.sym]) {
-            characters.push(event.key.keysym.sym);
+    if (kc < 256) {
+        if (displayable[kc]) {
+            // Verify caps is on, if it is, verify shift is also not on.
+            if (capsOn && !(capsOn && (is_held(SDLK_LSHIFT) || is_held(SDLK_RSHIFT)))) {
+                if (kc >= 'a' && kc <= 'z') {
+                    characters.push(kc - 'a' + 'A');
+                }
+            }
+            else {
+                if (!(capsOn) && (is_held(SDLK_RSHIFT) || is_held(SDLK_LSHIFT))) {
+                    if (kc >= 'a' && kc <= 'z') {
+                        characters.push(kc - 'a' + 'A');
+                    }
+                }
+                else {
+                    characters.push(kc);
+                }
+            }
         }
     }
 }
