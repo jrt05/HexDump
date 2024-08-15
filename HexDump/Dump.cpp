@@ -18,6 +18,7 @@ Dump::Dump(GFXs *g, InputHandler *h) {
     displaypos = 0;
     filesize = 0;
     file_opened = false;
+	edit_mode = false;
 
     uppercase = true;
     CheckMenuItem(*graphics->getMenu(), ID_HEX_UPPERCASE, MF_CHECKED);
@@ -53,14 +54,14 @@ Dump::Dump(GFXs *g, InputHandler *h) {
 
     // Create command line stuff
     cmd_line_bmp.height = 1;
-    cmd_line_bmp.width = colwidth * numcharswidth - 5 * colwidth;
+    cmd_line_bmp.width = colwidth * numcharswidth - 16 * colwidth;  // calc line length
     cmd_line_bmp.pixels = new Uint32[colwidth * numcharswidth * 1];
     for (int j = 0; j != colwidth * numcharswidth * 1; ++j) {
         cmd_line_bmp.pixels[j] = 0xffbfbfbf;
     }
     cmd_line_rect.h = cmd_line_bmp.height;
     cmd_line_rect.w = cmd_line_bmp.width;
-    cmd_line_rect.x = colwidth * 5;
+    cmd_line_rect.x = colwidth * 1;  // start line at column 1. base 0 columns.
     cmd_line_rect.y = rowheight * 2 + rowheight - 2;
 
     // Create curser stuff
@@ -107,11 +108,6 @@ void Dump::printRows() {
     }
     SDL_UpdateTexture(texture, NULL, screen->pixels, screen->width * sizeof(Uint32));
 
-    if (cmd.size() != 0) {
-        rows[2] = std::string("Cmd:");
-        rows[2].append(cmd);
-    }
-
     // Draw each line
     for (int x = 0; x != rows.size(); ++x) {
         BMP line;
@@ -140,9 +136,11 @@ void Dump::printRows() {
     SDL_UpdateTexture(texture, &cmd_line_rect, cmd_line_bmp.pixels, cmd_line_bmp.width * sizeof(Uint32));
 
     // Draw curser
-    curser_rect.x = offset + colwidth * curser.x;
-    curser_rect.y = (curser.y + 1) * rowheight - 3;
-    SDL_UpdateTexture(texture, &curser_rect, curser_bmp.pixels, curser_bmp.width * sizeof(Uint32));
+	if (edit_mode) {
+		curser_rect.x = offset + colwidth * curser.x;
+		curser_rect.y = (curser.y + 1) * rowheight - 3;
+		SDL_UpdateTexture(texture, &curser_rect, curser_bmp.pixels, curser_bmp.width * sizeof(Uint32));
+	}
 
     // Do we want to draw selection field?
     if (curser_moving) {
@@ -203,11 +201,11 @@ void Dump::fillRows() {
         }
         temp = stream.str();
 
-        temp.append("    ");
+        temp.append("  ");
         std::streampos off = (temppos - bufferpos) % 0x10;      // Round down in hex
         temp.append(char2hex(&buffer, temppos - bufferpos));    // Convert binary to hex
 
-        temp.append("    |");
+        temp.append("  |");
         temp.append(subvec(&buffer, temppos - bufferpos));
         temp.append("|");
         temppos -= off;
@@ -217,6 +215,7 @@ void Dump::fillRows() {
     printRows();
 }
 
+// Get a substring for this line. 
 std::string Dump::subvec(const std::vector<char> *buf, size_t pos) {
     std::string ret;
     size_t npos = pos % 0x10;
@@ -268,6 +267,7 @@ std::string Dump::char2hex(const std::vector<char> *buf, size_t pos) {
         else {
             ret.push_back(b[((*buf)[pos] >> 4) & 0x0f]);
             ret.push_back(b[(*buf)[pos] & 0x0f]);
+			//ret.push_back(' ');
         }
     }
 
@@ -335,7 +335,7 @@ void Dump::update() {
             h.append(stream.str());
             rows[1] = h;
 
-            h = std::string("Cmd:");
+            h = std::string("  Offset       Hex Data                             Character Data");
             rows[2] = h;
 
             // set parms and print to screen
@@ -351,7 +351,7 @@ void Dump::update() {
     // Here we check for key press scrolling
     if (input->is_pressed(SDLK_UP)) {
         --curser.y;
-        if (curser.y < 0) { //startdata) {
+        if (curser.y < 0 || !edit_mode) { //startdata) {
             moveDisplayPos(-0x10);
             fill_rows = true;
             curser.y = 0; //startdata;
@@ -367,7 +367,7 @@ void Dump::update() {
     else if (input->is_held(SDLK_UP)) {
         if (Time::getNanoSeconds() - heldtime[SDLK_UP] > Time::SECOND / 2) {
             --curser.y;
-            if (curser.y < 0) { //startdata) {
+            if (curser.y < 0 || !edit_mode) { //startdata) {
                 moveDisplayPos(-0x10);
                 fill_rows = true;
                 curser.y = 0; //startdata;
@@ -384,7 +384,7 @@ void Dump::update() {
     // Check if left arrow key is pressed
     if (input->is_pressed(SDLK_LEFT)) {
         --curser.x;
-        if (curser.x < 0) {
+        if (curser.x < 0 || !edit_mode) {
             moveDisplayPos(-0x1);
             fill_rows = true;
             curser.x = 0;
@@ -400,7 +400,7 @@ void Dump::update() {
     else if (input->is_held(SDLK_LEFT)) {
         if (Time::getNanoSeconds() - heldtime[SDLK_LEFT] > Time::SECOND / 2) {
             --curser.x;
-            if (curser.x < 0) {
+            if (curser.x < 0 || !edit_mode) {
                 moveDisplayPos(-0x1);
                 fill_rows = true;
                 curser.x = 0;
@@ -416,7 +416,7 @@ void Dump::update() {
     // Check if right arrow key is pressed
     if (input->is_pressed(SDLK_RIGHT)) {
         ++curser.x;
-        if (curser.x >= numcharswidth) {
+        if (curser.x >= numcharswidth || !edit_mode) {
             moveDisplayPos(0x1);
             fill_rows = true;
             curser.x = numcharswidth - 1;
@@ -432,7 +432,7 @@ void Dump::update() {
     else if (input->is_held(SDLK_RIGHT)) {
         if (Time::getNanoSeconds() - heldtime[SDLK_RIGHT] > Time::SECOND / 2) {
             ++curser.x;
-            if (curser.x >= numcharswidth) {
+            if (curser.x >= numcharswidth || !edit_mode) {
                 moveDisplayPos(0x1);
                 fill_rows = true;
                 curser.x = numcharswidth - 1;
@@ -448,7 +448,7 @@ void Dump::update() {
     // Check if down arrow is pressed
     if (input->is_pressed(SDLK_DOWN)) {
         ++curser.y;
-        if (curser.y >= numcharsheight) {
+        if (curser.y >= numcharsheight || !edit_mode) {
             moveDisplayPos(0x10);
             fill_rows = true;
             curser.y = numcharsheight - 1;
@@ -464,7 +464,7 @@ void Dump::update() {
     else if (input->is_held(SDLK_DOWN)) {
         if (Time::getNanoSeconds() - heldtime[SDLK_DOWN] > Time::SECOND / 2) {
             ++curser.y;
-            if (curser.y >= numcharsheight) {
+            if (curser.y >= numcharsheight || !edit_mode) {
                 moveDisplayPos(0x10);
                 fill_rows = true;
                 curser.y = numcharsheight - 1;
@@ -553,6 +553,18 @@ void Dump::update() {
             uppercase = false;
         }
     }
+	// Check edit state
+	if (input->edit_changed()) {
+		draw_rows = true;
+		if (input->edit_state() == true) {
+			edit_mode = true;
+			CheckMenuItem(*graphics->getMenu(), ID_EDIT_ENABLEEDITING, MF_CHECKED);
+		}
+		else {
+			edit_mode = false;
+			CheckMenuItem(*graphics->getMenu(), ID_EDIT_ENABLEEDITING, MF_UNCHECKED);
+		}
+	}
     // Check if we clicked the mouse
     int mx, my;
     if (input->mouse_clicked(&mx, &my)) {
@@ -596,6 +608,11 @@ void Dump::update() {
         }
         draw_rows = true;
     }
+
+	if (input->is_pressed(SDLK_KP_ENTER) || input->is_pressed(SDLK_RETURN)) {
+		cmd = "";
+		fill_rows = true;
+	}
 
     // Check for command typing
     if (!input->is_queue_empty()) {

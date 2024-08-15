@@ -25,6 +25,7 @@ int SDL_main(int argc, char *argv[]) {
     Dump *dump = new Dump(graphics, input);
 
     while (!input->quit()) {
+        unsigned int start_of_loop = SDL_GetTicks();
         input->update();
 
         graphics->clear();
@@ -33,9 +34,18 @@ int SDL_main(int argc, char *argv[]) {
 
         //graphics->draw();
         graphics->commit();
+
+        unsigned int end_of_loop = SDL_GetTicks();
+        unsigned int elapsed_time = end_of_loop - start_of_loop;
+        if (elapsed_time < (1000 / 60.0)) {
+            int sleep_time = (int) ((1000 / 60.0) - (end_of_loop - start_of_loop));
+            Time::sleep(sleep_time);
+            //SDL_Delay(sleep_time);
+        }
     }
 
     delete graphics;
     delete input;
+	delete dump;
     return 0;
 }

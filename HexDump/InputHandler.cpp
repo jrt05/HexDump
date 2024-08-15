@@ -10,19 +10,23 @@
 #include <SDL_mouse.h>
 #include <SDL_syswm.h>
 
-InputHandler::InputHandler() {
-    key_was_pressed = false;
-    escape = false;
-    close_requested = false;
-    load = false;
-    menu = false;
-    mouseY = 0;
-    uppercase = true;
-    bitfont = naturalfont = false;
-    mouse_was_clicked = false;
-    left_mouse_was_clicked = false;
-    mouse_held = false;
-    case_selected = false;
+InputHandler::InputHandler() :
+                                key_was_pressed(false),
+                                escape(false),
+                                close_requested(false),
+                                load(false),
+                                menu(false),
+                                mouseY(0),
+                                uppercase(true),
+                                bitfont(false),
+                                naturalfont(false),
+                                mouse_was_clicked(false),
+                                left_mouse_was_clicked(false),
+                                mouse_held(false),
+                                case_selected(false),
+	                            editing(false),
+	                            editchanged(false)
+                                {
     displayable.clear();
     displayable.resize(256, false);
     build_display();
@@ -33,11 +37,22 @@ InputHandler::~InputHandler() {
 }
 
 void InputHandler::build_display() {
-    std::string d = "abcdefghijklmnopqrstuvwxyz0123456789`[]\\;',./-= ";
+    //std::string d = "abcdefghijklmnopqrstuvwxyz0123456789`[]\\;',./-= ";
+	std::string d = "abcdefghijklmnopqrstuvwxyz0123456789`~!@#$%^&*()_+-=\\|[]{};':\",.<>/? ";
     // Set all displayable characters to true in displayable vector
     for (size_t x = 0; x != d.size(); ++x) {
         displayable[d[x]] = true;
     }
+}
+
+bool InputHandler::edit_state() {
+	return editing;
+}
+
+bool InputHandler::edit_changed() {
+	bool tmp = editchanged;
+	editchanged = false;
+	return tmp;
 }
 
 char InputHandler::get_char() {
@@ -110,15 +125,41 @@ void InputHandler::keydown(SDL_Event &event) {
     keys[kc] = true;
 
     // Test for capslock
-    int capstate = SDL_GetModState();
     bool capsOn = false;
-    capstate = capstate & KMOD_CAPS;
-    capsOn = (capstate == KMOD_CAPS) ? true : false;
-    //if (temp == KMOD_CAPS)
-    //    std::cout << "CAP ON";
+	if ((GetKeyState(VK_CAPITAL) & ((short)0x0001)) != 0) {
+		capsOn = true;
+	}
 
     if (kc < 256) {
         if (displayable[kc]) {
+			// Shift is held
+			if (is_held(SDLK_LSHIFT) || is_held(SDLK_RSHIFT)) {
+				if (kc >= 'a' && kc <= 'z') {
+					if (capsOn) {   // Push lowercase
+						characters.push(kc);
+					}
+					else {			// Push uppercase
+						characters.push(kc - 'a' + 'A');
+					}
+				}
+				else {
+					characters.push(kc);
+				}
+			}
+			else {
+				if (kc >= 'a' && kc <= 'z') {
+					if (!capsOn) {   // Push lowercase
+						characters.push(kc);
+					}
+					else {			// Push uppercase
+						characters.push(kc - 'a' + 'A');
+					}
+				}
+				else {
+					characters.push(kc);
+				}
+			}
+#if 0
             // Verify caps is on, if it is, verify shift is also not on.
             if (capsOn && !(capsOn && (is_held(SDLK_LSHIFT) || is_held(SDLK_RSHIFT)))) {
                 if (kc >= 'a' && kc <= 'z') {
@@ -135,6 +176,7 @@ void InputHandler::keydown(SDL_Event &event) {
                     characters.push(kc);
                 }
             }
+#endif
         }
     }
 }
@@ -188,6 +230,9 @@ void InputHandler::update() {
                     case_selected = true;
                     uppercase = true;
                     break;
+				case ID_EDIT_ENABLEEDITING:
+					editing = !editing;
+					editchanged = true;
                 default:
                     break;
                 }

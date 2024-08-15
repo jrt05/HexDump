@@ -23,6 +23,8 @@ private:
     bool mouse_was_clicked;
     bool left_mouse_was_clicked;
     bool mouse_held;
+	bool editing;
+	bool editchanged;
 
     void mouseWheel();
     int mouseY;
@@ -60,5 +62,7 @@ public:
     bool left_clicked();
     bool is_mouse_held(int *x, int *y);
     bool is_queue_empty() { return characters.empty(); }
+	bool edit_state();
+	bool edit_changed();
     char get_char();
 };

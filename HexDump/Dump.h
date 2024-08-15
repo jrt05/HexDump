@@ -15,7 +15,6 @@ public:
 
     void update();
 private:
-
     class Pos {
     public:
         int x, y;
@@ -38,6 +37,7 @@ private:
     void moveDisplayPos(int offset);
 
     bool file_opened;       // True if we opened a file
+	bool edit_mode;			// Is editing enabled?
 
     std::map<long long, Time::nanoseconds> heldtime;
 

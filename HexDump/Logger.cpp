@@ -8,18 +8,16 @@ namespace Logger {
 
     Log LogOut;
 
-    Log::Log() {
+    Log::Log() : verbose(false) {
         logstream.open("./messages.log", std::ofstream::out | std::ofstream::app);
         logstream << "------------------------------------------------------------------" << std::endl;
         logstream << Time::getTimeString() << " Program started" << std::endl;
-        verbose = false;
         return;
     }
-    Log::Log(std::string file) {
+    Log::Log(std::string file) : verbose(false) {
         logstream.open(file.c_str(), std::ofstream::out | std::ofstream::app);
         logstream << "------------------------------------------------------------------" << std::endl;
         logstream << Time::getTimeString() << " Program started" << std::endl;
-
         return;
     }
     Log::~Log() {

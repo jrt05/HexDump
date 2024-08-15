@@ -53,8 +53,8 @@ void GFXs::create() {
         return;
     }
 
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    //renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    //renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
     if (renderer == NULL) {
         Logger::LogOut.logstream << Time::getTimeString << " SDL could not create renderer. SDL Error: " << SDL_GetError() << std::endl;
@@ -200,7 +200,7 @@ void GFXs::readBMP(const char * filename, BMP &bmp) {
     bmp.height = *(int*)&info[22];
 
     int row_padded = (bmp.width * 3 + 3) & (~3);
-    unsigned char* data = new unsigned char[row_padded];
+    unsigned char* data = new unsigned char[row_padded + 30];
     bmp.pixels = new Uint32[bmp.width * bmp.height * sizeof(Uint32)];
     unsigned char tmp;
     //int x = pixel_width * pixel_height;
@@ -218,6 +218,6 @@ void GFXs::readBMP(const char * filename, BMP &bmp) {
             bmp.pixels[x + y * bmp.width] = 0xFF000000 | (data[j] << 16) | (data[j + 1] << 8) | (data[j + 2]);
         }
     }
-    delete data;
+    delete[] data;
     fclose(f);
 }

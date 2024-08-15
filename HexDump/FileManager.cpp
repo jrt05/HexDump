@@ -74,7 +74,7 @@ void FileManager::openDialog() {
                         szTo[filePath.size()] = '\0';
                         WideCharToMultiByte(CP_ACP, NULL, filePath.c_str(), -1, szTo, (int)filePath.length(), NULL, NULL);
                         filename = szTo;
-                        delete szTo;
+                        delete[] szTo;
 
                         filename = filename.substr(filename.rfind("\\") + 1);
 
