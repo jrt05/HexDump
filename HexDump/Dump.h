@@ -38,6 +38,7 @@ private:
 
     bool file_opened;       // True if we opened a file
 	bool edit_mode;			// Is editing enabled?
+    bool precise_percentage; // Display precision percentage?
 
     std::map<long long, Time::nanoseconds> heldtime;
 

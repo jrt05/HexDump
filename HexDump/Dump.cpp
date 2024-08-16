@@ -19,6 +19,7 @@ Dump::Dump(GFXs *g, InputHandler *h) {
     filesize = 0;
     file_opened = false;
 	edit_mode = false;
+    precise_percentage = false;
 
     uppercase = true;
     CheckMenuItem(*graphics->getMenu(), ID_HEX_UPPERCASE, MF_CHECKED);
@@ -137,7 +138,13 @@ void Dump::printRows() {
 
     // Draw Percentage
     char buffer[32];
-    snprintf(buffer, sizeof(buffer), "%.2f", 100 * ((double)displaypos / filesize));
+    if (precise_percentage) {
+        snprintf(buffer, sizeof(buffer), "%.6f", 100 * ((double)displaypos / filesize));
+    }
+    else {
+        snprintf(buffer, sizeof(buffer), "%.2f", 100 * ((double)displaypos / filesize));
+    }
+
     std::string percstr(std::string(buffer) + "%");
     BMP percbmp;
     graphics->buildString(percstr, percbmp, graphics->MEDIUMFONT);
@@ -577,6 +584,19 @@ void Dump::update() {
 			CheckMenuItem(*graphics->getMenu(), ID_EDIT_ENABLEEDITING, MF_UNCHECKED);
 		}
 	}
+    // Check precise percentage state
+    if (input->precise_changed()) {
+        draw_rows = true;
+        if (input->precise_state() == true) {
+            precise_percentage = true;
+            CheckMenuItem(*graphics->getMenu(), ID_SETTINGS_PRECISE, MF_CHECKED);
+        }
+        else {
+            precise_percentage = false;
+            CheckMenuItem(*graphics->getMenu(), ID_SETTINGS_PRECISE, MF_UNCHECKED);
+        }
+    }
+
     // Check if we clicked the mouse
     int mx, my;
     if (input->mouse_clicked(&mx, &my)) {

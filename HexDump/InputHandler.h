@@ -25,6 +25,8 @@ private:
     bool mouse_held;
 	bool editing;
 	bool editchanged;
+    bool precise_percent;
+    bool precisechanged;
 
     void mouseWheel();
     int mouseY;
@@ -65,4 +67,6 @@ public:
 	bool edit_state();
 	bool edit_changed();
     char get_char();
+    bool precise_state();
+    bool precise_changed();
 };

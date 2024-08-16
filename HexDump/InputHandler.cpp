@@ -25,7 +25,9 @@ InputHandler::InputHandler() :
                                 mouse_held(false),
                                 case_selected(false),
 	                            editing(false),
-	                            editchanged(false)
+	                            editchanged(false),
+                                precise_percent(false),
+                                precisechanged(false)
                                 {
     displayable.clear();
     displayable.resize(256, false);
@@ -53,6 +55,15 @@ bool InputHandler::edit_changed() {
 	bool tmp = editchanged;
 	editchanged = false;
 	return tmp;
+}
+bool InputHandler::precise_changed() {
+    bool tmp = precisechanged;
+    precisechanged = false;
+    return tmp;
+}
+
+bool InputHandler::precise_state() {
+    return precise_percent;
 }
 
 char InputHandler::get_char() {
@@ -233,6 +244,11 @@ void InputHandler::update() {
 				case ID_EDIT_ENABLEEDITING:
 					editing = !editing;
 					editchanged = true;
+                    break;
+                case ID_SETTINGS_PRECISE:
+                    precise_percent = !precise_percent;
+                    precisechanged = true;
+                    break;
                 default:
                     break;
                 }
