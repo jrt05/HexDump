@@ -135,6 +135,18 @@ void Dump::printRows() {
     // Draw command line
     SDL_UpdateTexture(texture, &cmd_line_rect, cmd_line_bmp.pixels, cmd_line_bmp.width * sizeof(Uint32));
 
+    // Draw Percentage
+    char buffer[32];
+    snprintf(buffer, sizeof(buffer), "%.2f", 100 * ((double)displaypos / filesize));
+    std::string percstr(std::string(buffer) + "%");
+    BMP percbmp;
+    graphics->buildString(percstr, percbmp, graphics->MEDIUMFONT);
+    r.h = percbmp.height;
+    r.w = percbmp.width;
+    r.x = graphics->getWidth() - r.w;
+    r.y = graphics->getHeight() - r.h;
+    SDL_UpdateTexture(texture, &r, percbmp.pixels, percbmp.width * sizeof(Uint32));
+
     // Draw curser
 	if (edit_mode) {
 		curser_rect.x = offset + colwidth * curser.x;
