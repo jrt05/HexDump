@@ -309,7 +309,7 @@ void Dump::moveDisplayPos(int offset) {
         else {
             displaypos += offset;
             if (displaypos >= fm->getFilesize()) {
-                displaypos = fm->getFilesize();
+                displaypos = fm->getFilesize() - (std::streampos) 1;   // Allow showing the last char only
             }
         }
     }
